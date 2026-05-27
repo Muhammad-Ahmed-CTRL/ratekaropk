@@ -191,6 +191,7 @@ CREATE TABLE IF NOT EXISTS public.rate_benchmarks (
   usd_high         numeric(10, 2) NOT NULL CHECK (usd_high > 0),
   source_count     integer NOT NULL DEFAULT 1 CHECK (source_count > 0),
   confidence_score integer NOT NULL DEFAULT 50 CHECK (confidence_score >= 0 AND confidence_score <= 100),
+  source_notes     text,
   last_updated     timestamptz NOT NULL DEFAULT now(),
   created_at       timestamptz NOT NULL DEFAULT now(),
   UNIQUE (skill_slug, city, experience, client_type)
