@@ -1,7 +1,7 @@
 {
   "name": "RateKaro PK",
   "short_name": "RateKaro",
-  "description": "Pakistan's first freelancer rate intelligence tool.",
+  "description": "Freelancer rate calculator, PSEB tax estimator, and proposal generator for Pakistani freelancers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0F",

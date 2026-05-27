@@ -88,6 +88,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
+              aria-current={isActive ? 'page' : undefined}
               className={clsx(
                 'relative px-4 py-1.5 text-sm font-medium rounded-full transition-colors duration-200',
                 isActive ? 'text-[#00F5C4]' : 'text-[#8B8B9E] hover:text-white'
@@ -207,4 +208,3 @@ export default function Navbar() {
     </header>
   );
 }
-

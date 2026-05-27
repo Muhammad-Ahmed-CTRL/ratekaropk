@@ -83,7 +83,7 @@ export default function TaxCalculatorPage() {
     <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 pb-32">
       <div className="mb-10 md:mb-16">
         <h1 className="text-3xl md:text-5xl font-bold text-[#00F5C4] mb-3">Tax Calculator</h1>
-        <p className="text-[#8B8B9E] text-sm md:text-base max-w-2xl">Estimate your tax liability and net income based on current Pakistani freelancer tax brackets (2024-2025).</p>
+        <p className="text-[#8B8B9E] text-sm md:text-base max-w-2xl">Estimate freelancer tax liability, PSEB export-rate impact, and net income using RateKaro&apos;s configured Pakistan tax assumptions.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

@@ -1,32 +1,43 @@
 import { MetadataRoute } from 'next';
+import { rateData } from '@/lib/rateData';
+import { siteUrl, skillRatePath } from '@/lib/seoConfig';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://ratekaro.pk';
+  const lastModified = new Date('2026-05-28T00:00:00.000Z');
   
-  return [
+  const corePages: MetadataRoute.Sitemap = [
     {
-      url: baseUrl,
-      lastModified: new Date(),
+      url: siteUrl,
+      lastModified,
       changeFrequency: 'weekly',
       priority: 1,
     },
     {
-      url: `${baseUrl}/calculator`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
+      url: `${siteUrl}/calculator`,
+      lastModified,
+      changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/tax`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
+      url: `${siteUrl}/tax`,
+      lastModified,
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/proposals`,
-      lastModified: new Date(),
+      url: `${siteUrl}/proposals`,
+      lastModified,
       changeFrequency: 'monthly',
-      priority: 0.8,
+      priority: 0.7,
     },
   ];
+
+  const ratePages: MetadataRoute.Sitemap = rateData.map((skill) => ({
+    url: `${siteUrl}${skillRatePath(skill.slug)}`,
+    lastModified,
+    changeFrequency: 'weekly',
+    priority: skill.slug === 'web-dev' ? 0.85 : 0.72,
+  }));
+
+  return [...corePages, ...ratePages];
 }

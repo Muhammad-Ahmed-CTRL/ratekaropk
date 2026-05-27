@@ -5,8 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Calculator, Receipt, FileText, ArrowRight, Zap, Globe, Shield } from 'lucide-react';
 import { Marquee } from '@/components/ui/Marquee';
+import { getTopRatePages, skillRatePath } from '@/lib/seoConfig';
 
 export default function Home() {
+  const topRatePages = getTopRatePages();
+
   return (
     <div className="relative w-full overflow-hidden">
       {/* Hero Section */}
@@ -79,9 +82,6 @@ export default function Home() {
             </Link>
           </motion.div>
         </div>
-
-        {/* Floating gradient orb */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#00F5C4] rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen" />
       </section>
 
       {/* Stats Marquee */}
@@ -198,6 +198,77 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="max-w-7xl mx-auto px-6 mb-32 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-3xl font-bold mb-3">Popular Pakistan freelance rate guides</h2>
+            <p className="text-[#8B8B9E] max-w-2xl">
+              Browse skill-specific benchmark pages built for Pakistani freelancers comparing local
+              and foreign-client hourly rates.
+            </p>
+          </div>
+          <Link href="/calculator" className="inline-flex items-center gap-2 text-[#00F5C4] font-semibold">
+            Open calculator <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {topRatePages.map((skill) => (
+            <Link
+              key={skill.slug}
+              href={skillRatePath(skill.slug)}
+              className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4 text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4] transition-colors"
+            >
+              <span className="block text-sm font-semibold">{skill.skill} rates</span>
+              <span className="block mt-1 text-xs text-[#8B8B9E]">
+                {skill.category} · Pakistan hourly benchmark
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-6 mb-32 relative z-10">
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold mb-3">Freelancer pricing questions</h2>
+          <p className="text-[#8B8B9E]">
+            Short answers for common Pakistan freelancer rate, tax, and proposal searches.
+          </p>
+        </div>
+        <div className="space-y-3">
+          {[
+            {
+              question: 'How do Pakistani freelancers calculate hourly rates?',
+              answer:
+                'Start with a market range for your skill and experience, then adjust for client location, portfolio strength, delivery speed, project risk, and whether the client pays locally or internationally.',
+            },
+            {
+              question: 'Should I quote Pakistani clients and foreign clients differently?',
+              answer:
+                'Yes. Local-client pricing and foreign-client pricing should be benchmarked separately because budgets, payment currency, competition, and buyer expectations are different.',
+            },
+            {
+              question: 'Does PSEB registration affect freelancer tax in Pakistan?',
+              answer:
+                'For eligible IT and IT-enabled export receipts, PSEB registration can affect the applicable tax treatment. Always verify your exact filing position with FBR guidance or a tax professional.',
+            },
+            {
+              question: 'Are RateKaro PK rates financial advice?',
+              answer:
+                'No. RateKaro PK provides market-estimated benchmarks and calculators for planning. Final pricing, tax filing, and client negotiation decisions remain your responsibility.',
+            },
+          ].map((item) => (
+            <details
+              key={item.question}
+              className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4"
+            >
+              <summary className="cursor-pointer font-semibold text-white">{item.question}</summary>
+              <p className="mt-3 text-sm leading-relaxed text-[#8B8B9E]">{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="max-w-4xl mx-auto px-6 mb-24 text-center">
         <motion.div
@@ -206,7 +277,6 @@ export default function Home() {
           viewport={{ once: true, margin: "-50px" }}
           className="bg-gradient-to-br from-[#111118] to-[#0A0A0F] border border-[rgba(0,245,196,0.3)] rounded-3xl p-10 md:p-16 relative overflow-hidden shadow-[0_0_50px_rgba(0,245,196,0.1)]"
         >
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none" />
           <div className="relative z-10">
             <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">Ready to upgrade your freelance career?</h2>
             <p className="text-[#8B8B9E] mb-10 text-lg max-w-xl mx-auto">Join thousands of Pakistani freelancers who are charging what they&apos;re truly worth.</p>

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { skillRatePath } from '@/lib/seoConfig';
 
 export default function Footer() {
   return (
@@ -21,7 +22,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-12 gap-y-3">
             <div className="flex flex-col gap-2">
               <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Tools</span>
               <Link href="/calculator" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Rate Calculator</Link>
@@ -33,6 +34,12 @@ export default function Footer() {
               <Link href="/dashboard" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Dashboard</Link>
               <Link href="/login" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Login</Link>
               <Link href="/signup" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Sign Up</Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Rates</span>
+              <Link href={skillRatePath('web-dev')} className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Web Dev Rates</Link>
+              <Link href={skillRatePath('graphic-design')} className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Graphic Design Rates</Link>
+              <Link href={skillRatePath('seo')} className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">SEO Rates</Link>
             </div>
             <div className="flex flex-col gap-2">
               <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Info</span>
@@ -54,3 +61,4 @@ export default function Footer() {
     </footer>
   );
 }
+

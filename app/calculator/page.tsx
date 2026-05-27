@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { SkillPill } from '@/components/ui/SkillPill';
@@ -11,6 +12,7 @@ import { RateSkeleton } from '@/components/ui/RateSkeleton';
 import { useToast } from '@/components/ui/Toast';
 import { useRateStore, Experience } from '@/lib/store/useRateStore';
 import { categoryOrder, getSkillsByCategory } from '@/lib/marketRates';
+import { getRateBySlug } from '@/lib/rateData';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { clsx } from 'clsx';
 import { AlertTriangle, CalendarClock, Database, ExternalLink, Save, ShieldCheck } from 'lucide-react';
@@ -33,6 +35,7 @@ function CalculatorContent() {
   } = useRateStore();
 
   const toast = useToast();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(selectedCategory);
   const [showShare, setShowShare] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -40,6 +43,17 @@ function CalculatorContent() {
   useEffect(() => {
     calculateRate();
   }, [selectedSkillSlug, experience, city, clientType, calculateRate]);
+
+  useEffect(() => {
+    const skillSlug = searchParams.get('skill');
+    if (!skillSlug || skillSlug === selectedSkillSlug) return;
+
+    const skill = getRateBySlug(skillSlug);
+    if (!skill) return;
+
+    setSkill(skill.slug, skill.skill, skill.category);
+    setActiveTab(skill.category);
+  }, [searchParams, selectedSkillSlug, setSkill]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -317,7 +331,9 @@ function CalculatorContent() {
 export default function CalculatorPage() {
   return (
     <ErrorBoundary>
-      <CalculatorContent />
+      <Suspense fallback={<RateSkeleton />}>
+        <CalculatorContent />
+      </Suspense>
     </ErrorBoundary>
   );
 }
