@@ -1,0 +1,12 @@
+import { NextResponse } from 'next/server';
+import { getUsdToPkrRate } from '@/lib/exchangeRate';
+
+export async function GET() {
+  const exchange = await getUsdToPkrRate();
+
+  return NextResponse.json({
+    rate: exchange.rate,
+    source: exchange.source,
+    last_updated: exchange.lastUpdated,
+  });
+}
