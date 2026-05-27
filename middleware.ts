@@ -52,7 +52,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (isProtected && !user) {
+  // Allow local development testing of proposals page without requiring Supabase auth redirect settings
+  const isDevProposals = process.env.NODE_ENV === 'development' && pathname.startsWith('/proposals');
+
+  if (isProtected && !user && !isDevProposals) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);

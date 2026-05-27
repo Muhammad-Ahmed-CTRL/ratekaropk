@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Copy, Share2, Download, AlertCircle } from 'lucide-react';
 import { useRateStore } from '@/lib/store/useRateStore';
@@ -9,11 +9,27 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 function ProposalsContent() {
   const { calculatedRate, selectedSkillName, experience, clientType } = useRateStore();
+  const [isMounted, setIsMounted] = useState(false);
   const [projectDescription, setProjectDescription] = useState('');
-  const [rateInput, setRateInput] = useState<number>(calculatedRate?.usdMid || 0);
+  const [rateInput, setRateInput] = useState<number>(0);
   const [proposal, setProposal] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const toast = useToast();
+
+  useEffect(() => {
+    setIsMounted(true);
+    if (calculatedRate?.usdMid) {
+      setRateInput(calculatedRate.usdMid);
+    }
+  }, [calculatedRate]);
+
+  if (!isMounted) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-32 flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00F5C4]"></div>
+      </div>
+    );
+  }
 
   const handleGenerate = async () => {
     if (!projectDescription.trim()) {
