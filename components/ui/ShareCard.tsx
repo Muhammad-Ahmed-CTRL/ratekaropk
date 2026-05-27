@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Copy, Twitter } from 'lucide-react';
+import { Check, Copy, Twitter } from 'lucide-react';
 import { useState } from 'react';
 
 interface ShareCardProps {
@@ -14,7 +14,7 @@ interface ShareCardProps {
 export function ShareCard({ usdMid, experience, skill, city }: ShareCardProps) {
   const [copied, setCopied] = useState(false);
   
-  const text = `I charge $${usdMid}/hr as a ${experience} ${skill} in ${city === 'remote' ? 'Remote (PK)' : city}.\n\nCalculated via RateKaro PK\nratekaro.pk/calculator`;
+  const text = `I charge $${usdMid}/hr as a ${experience} ${skill} in ${city === 'remote' ? 'Remote (PK)' : city}.\n\nCalculated via RateKaro PK\nhttps://ratekaropk.site/calculator`;
   
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
@@ -67,9 +67,10 @@ export function ShareCard({ usdMid, experience, skill, city }: ShareCardProps) {
           className="w-10 h-9 flex items-center justify-center bg-[rgba(255,255,255,0.05)] text-[#8B8B9E] hover:text-white hover:bg-[rgba(255,255,255,0.1)] rounded-lg transition-colors border border-[rgba(255,255,255,0.1)]"
           title="Copy to clipboard"
         >
-          {copied ? <span className="text-[#00F5C4] text-xs">✓</span> : <Copy size={16} />}
+          {copied ? <Check size={16} className="text-[#00F5C4]" /> : <Copy size={16} />}
         </button>
       </div>
     </motion.div>
   );
 }
+
