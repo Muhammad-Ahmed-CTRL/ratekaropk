@@ -1,21 +1,45 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Home, Calculator, Receipt, FileText, User } from 'lucide-react';
+import { Home, Calculator, Receipt, FileText, User, LogIn } from 'lucide-react';
 import { clsx } from 'clsx';
+import { createClient } from '@/lib/supabase/client';
 
-const navItems = [
+const baseNavItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/calculator', label: 'Calculator', icon: Calculator },
   { href: '/tax', label: 'Tax', icon: Receipt },
   { href: '/proposals', label: 'Proposals', icon: FileText },
-  { href: '/dashboard', label: 'Profile', icon: User },
 ];
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const supabase = useMemo(() => createClient(), []);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  const navItems = [
+    ...baseNavItems,
+    isLoggedIn
+      ? { href: '/dashboard', label: 'Profile', icon: User }
+      : { href: '/login', label: 'Sign In', icon: LogIn },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
@@ -35,13 +59,19 @@ export default function MobileNav() {
                   transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                 />
               )}
-              <Icon
-                size={20}
-                className={clsx(
-                  'relative z-10 transition-colors',
-                  isActive ? 'text-[#00F5C4]' : 'text-[#8B8B9E]'
+              <div className="relative">
+                <Icon
+                  size={20}
+                  className={clsx(
+                    'relative z-10 transition-colors',
+                    isActive ? 'text-[#00F5C4]' : 'text-[#8B8B9E]'
+                  )}
+                />
+                {/* Green dot indicator for logged-in user on Profile */}
+                {label === 'Profile' && isLoggedIn && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#00F5C4] border border-[#111118]" />
                 )}
-              />
+              </div>
               <span
                 className={clsx(
                   'relative z-10 text-[10px] font-medium transition-colors',
@@ -57,3 +87,4 @@ export default function MobileNav() {
     </nav>
   );
 }
+
