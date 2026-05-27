@@ -12,9 +12,12 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+
+    if (!geminiKey && !openaiKey) {
       return NextResponse.json(
-        { error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your .env.local file.' },
+        { error: 'AI Backend is not configured. Please add GEMINI_API_KEY or OPENAI_API_KEY to your env.' },
         { status: 500 }
       );
     }
@@ -39,10 +42,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please sign in to generate and save proposals.' }, { status: 401 });
     }
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
     const { projectDescription, rate, clientType, skill } = await request.json();
 
     if (!projectDescription || !rate) {
@@ -64,17 +63,61 @@ Structure:
 
 Keep it concise, confident, and professional. Do not use placeholders like [Insert Name], just write the template body ready to be sent. Use a natural, persuasive tone.`;
 
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_PROPOSAL_MODEL || 'gpt-4o-mini',
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Client Project Description: ${projectDescription}` }
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    });
+    let proposal = '';
 
-    const proposal = completion.choices[0].message.content || '';
+    if (geminiKey) {
+      // Use Gemini API (Free tier)
+      const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`;
+
+      const response = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `Client Project Description: ${projectDescription}` }],
+            },
+          ],
+          systemInstruction: {
+            parts: [{ text: systemPrompt }],
+          },
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 800,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Gemini API error details:', errorData);
+        throw new Error(`Gemini API returned status ${response.status}`);
+      }
+
+      const data = await response.json();
+      proposal = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } else if (openaiKey) {
+      // Use OpenAI API
+      const openai = new OpenAI({
+        apiKey: openaiKey,
+      });
+
+      const completion = await openai.chat.completions.create({
+        model: process.env.OPENAI_PROPOSAL_MODEL || 'gpt-4o-mini',
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Client Project Description: ${projectDescription}` }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
+      proposal = completion.choices[0].message.content || '';
+    }
 
     const { error: saveError } = await supabase.from('proposals').insert({
       user_id: session.user.id,
