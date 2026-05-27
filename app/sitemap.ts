@@ -32,6 +32,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
+  const guidePages: MetadataRoute.Sitemap = [
+    {
+      url: `${siteUrl}/guides/freelancer-tax-pakistan`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/guides/pseb-registration-freelancers`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/guides/section-154a-freelancer-tax`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/guides/fbr-freelancer-filing-checklist`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+  ];
+
   const ratePages: MetadataRoute.Sitemap = rateData.map((skill) => ({
     url: `${siteUrl}${skillRatePath(skill.slug)}`,
     lastModified,
@@ -39,5 +66,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: skill.slug === 'web-dev' ? 0.85 : 0.72,
   }));
 
-  return [...corePages, ...ratePages];
+  return [...corePages, ...guidePages, ...ratePages];
 }

@@ -22,7 +22,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-12 gap-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-x-8 gap-y-6">
             <div className="flex flex-col gap-2">
               <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Tools</span>
               <Link href="/calculator" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Rate Calculator</Link>
@@ -40,6 +40,13 @@ export default function Footer() {
               <Link href={skillRatePath('web-dev')} className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Web Dev Rates</Link>
               <Link href={skillRatePath('graphic-design')} className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Graphic Design Rates</Link>
               <Link href={skillRatePath('seo')} className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">SEO Rates</Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Guides</span>
+              <Link href="/guides/freelancer-tax-pakistan" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium">Freelancer Tax Guide</Link>
+              <Link href="/guides/pseb-registration-freelancers" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium">PSEB Registration</Link>
+              <Link href="/guides/section-154a-freelancer-tax" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium font-mono text-xs">Section 154A Tax</Link>
+              <Link href="/guides/fbr-freelancer-filing-checklist" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium">FBR Filing Checklist</Link>
             </div>
             <div className="flex flex-col gap-2">
               <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Info</span>
