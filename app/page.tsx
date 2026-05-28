@@ -158,7 +158,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-bold text-white mb-3">AI Proposals</h3>
             <p className="text-[#8B8B9E] leading-relaxed mb-6">Generate professional, high-converting client proposals tailored to your rate and project context using AI.</p>
-            <Link href="/proposals" className="inline-flex items-center gap-2 text-[#00F5C4] font-medium text-sm hover:underline underline-offset-4">
+            <Link href="/proposal-generator-pakistan" className="inline-flex items-center gap-2 text-[#00F5C4] font-medium text-sm hover:underline underline-offset-4">
               Generate Proposal <ArrowRight size={16} />
             </Link>
           </motion.div>
@@ -267,6 +267,54 @@ export default function Home() {
               </details>
             </StaggerItem>
           ))}
+        </Stagger>
+      </section>
+
+      {/* Resources Section */}
+      <section className="max-w-5xl mx-auto px-6 mb-32 relative z-10">
+        <Reveal className="mb-8 text-center">
+          <h2 className="text-3xl font-bold mb-3">Freelancer resources</h2>
+          <p className="text-[#8B8B9E]">
+            In-depth guides and tools for Pakistani freelancers.
+          </p>
+        </Reveal>
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <StaggerItem>
+            <Link
+              href="/freelance-rate-calculator-pakistan"
+              className="interactive-surface block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4 text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4]"
+            >
+              <span className="block text-sm font-semibold">Rate Calculator Guide</span>
+              <span className="block mt-1 text-xs text-[#8B8B9E]">How to find your ideal hourly rate</span>
+            </Link>
+          </StaggerItem>
+          <StaggerItem>
+            <Link
+              href="/freelancer-tax-calculator-pakistan"
+              className="interactive-surface block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4 text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4]"
+            >
+              <span className="block text-sm font-semibold">Tax Calculator Guide</span>
+              <span className="block mt-1 text-xs text-[#8B8B9E]">PSEB/FBR tax and take-home pay</span>
+            </Link>
+          </StaggerItem>
+          <StaggerItem>
+            <Link
+              href="/upwork-rate-calculator-pakistan"
+              className="interactive-surface block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4 text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4]"
+            >
+              <span className="block text-sm font-semibold">Upwork Rates</span>
+              <span className="block mt-1 text-xs text-[#8B8B9E]">Pricing for Upwork platform</span>
+            </Link>
+          </StaggerItem>
+          <StaggerItem>
+            <Link
+              href="/freelancer-pricing-methodology"
+              className="interactive-surface block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4 text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4]"
+            >
+              <span className="block text-sm font-semibold">Our Methodology</span>
+              <span className="block mt-1 text-xs text-[#8B8B9E]">How we calculate rate benchmarks</span>
+            </Link>
+          </StaggerItem>
         </Stagger>
       </section>
 

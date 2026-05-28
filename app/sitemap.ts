@@ -24,8 +24,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
+  ];
+
+  /* SEO landing pages (public, indexable) */
+  const seoLandingPages: MetadataRoute.Sitemap = [
     {
-      url: `${siteUrl}/proposals`,
+      url: `${siteUrl}/freelance-rate-calculator-pakistan`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+    {
+      url: `${siteUrl}/freelancer-tax-calculator-pakistan`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/pseb-tax-calculator`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/proposal-generator-pakistan`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/upwork-rate-calculator-pakistan`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/freelancer-pricing-methodology`,
       lastModified,
       changeFrequency: 'monthly',
       priority: 0.7,
@@ -66,5 +100,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: skill.slug === 'web-dev' ? 0.85 : 0.72,
   }));
 
-  return [...corePages, ...guidePages, ...ratePages];
+  return [...corePages, ...seoLandingPages, ...guidePages, ...ratePages];
 }

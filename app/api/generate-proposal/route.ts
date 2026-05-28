@@ -115,7 +115,7 @@ Keep it concise, confident, and professional. Use a natural, persuasive tone.`;
           apiKey: openrouterKey,
           baseURL: 'https://openrouter.ai/api/v1',
           defaultHeaders: {
-            'HTTP-Referer': 'https://ratekaropk.site',
+            'HTTP-Referer': 'https://www.ratekaropk.site',
             'X-Title': 'RateKaro PK',
           }
         });

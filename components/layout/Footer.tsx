@@ -28,13 +28,14 @@ export default function Footer() {
               <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Tools</span>
               <Link href="/calculator" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Rate Calculator</Link>
               <Link href="/tax" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Tax Calculator</Link>
-              <Link href="/proposals" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Proposal Generator</Link>
+              <Link href="/proposal-generator-pakistan" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Proposal Generator</Link>
             </StaggerItem>
             <StaggerItem className="flex flex-col gap-2">
-              <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Account</span>
-              <Link href="/dashboard" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Dashboard</Link>
-              <Link href="/login" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Login</Link>
-              <Link href="/signup" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Sign Up</Link>
+              <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Resources</span>
+              <Link href="/freelance-rate-calculator-pakistan" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Rate Guide</Link>
+              <Link href="/freelancer-tax-calculator-pakistan" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Tax Guide</Link>
+              <Link href="/upwork-rate-calculator-pakistan" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Upwork Rates</Link>
+              <Link href="/freelancer-pricing-methodology" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">Methodology</Link>
             </StaggerItem>
             <StaggerItem className="flex flex-col gap-2">
               <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Rates</span>
@@ -46,13 +47,14 @@ export default function Footer() {
               <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Guides</span>
               <Link href="/guides/freelancer-tax-pakistan" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium">Freelancer Tax Guide</Link>
               <Link href="/guides/pseb-registration-freelancers" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium">PSEB Registration</Link>
-              <Link href="/guides/section-154a-freelancer-tax" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium font-mono text-xs">Section 154A Tax</Link>
+              <Link href="/guides/section-154a-freelancer-tax" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium">Section 154A Tax</Link>
               <Link href="/guides/fbr-freelancer-filing-checklist" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors font-medium">FBR Filing Checklist</Link>
             </StaggerItem>
             <StaggerItem className="flex flex-col gap-2">
               <span className="text-[10px] font-semibold text-[#8B8B9E] uppercase tracking-widest">Info</span>
               <a href="https://pseb.org.pk" target="_blank" rel="noopener noreferrer" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">PSEB</a>
               <a href="https://fbr.gov.pk" target="_blank" rel="noopener noreferrer" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">FBR Pakistan</a>
+              <Link href="/pseb-tax-calculator" className="text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors">PSEB Tax Calculator</Link>
             </StaggerItem>
           </Stagger>
         </Reveal>
@@ -69,4 +71,3 @@ export default function Footer() {
     </footer>
   );
 }
-
