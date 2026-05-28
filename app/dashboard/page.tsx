@@ -52,6 +52,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>('rates');
+  const [expandedProposals, setExpandedProposals] = useState<Record<string, boolean>>({});
 
   const localRates = useRateStore((state) => state.savedRates);
   const localTaxEstimates = useTaxStore((state) => state.savedEstimates);
@@ -330,7 +331,27 @@ export default function DashboardPage() {
                           <span className="text-[10px] text-[#8B8B9E] shrink-0">{new Date(proposal.created_at).toLocaleDateString()}</span>
                         </div>
                         <p className="text-xs text-[#F5A623] font-semibold mb-3">${proposal.rate_used}/hr</p>
-                        <p className="text-sm text-[#E2E2E2] line-clamp-4 whitespace-pre-wrap">{proposal.generated_text}</p>
+                        <div className="relative">
+                          <p className={clsx("text-sm text-[#E2E2E2] whitespace-pre-wrap", !expandedProposals[proposal.id] && "line-clamp-4")}>{proposal.generated_text}</p>
+                        </div>
+                        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[rgba(255,255,255,0.05)]">
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(proposal.generated_text);
+                              toast.show('Proposal copied to clipboard!');
+                            }}
+                            className="text-xs font-semibold text-[#00F5C4] hover:text-[#00c9a3] transition-colors flex items-center gap-1.5"
+                          >
+                            <FileText size={14} />
+                            Copy Full Proposal
+                          </button>
+                          <button 
+                            onClick={() => setExpandedProposals(prev => ({ ...prev, [proposal.id]: !prev[proposal.id] }))}
+                            className="text-xs font-semibold text-[#8B8B9E] hover:text-white transition-colors"
+                          >
+                            {expandedProposals[proposal.id] ? 'Show Less' : 'Read Full'}
+                          </button>
+                        </div>
                       </motion.div>
                     ))}
                   </div>
