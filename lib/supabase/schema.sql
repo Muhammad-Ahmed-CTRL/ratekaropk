@@ -34,6 +34,18 @@ CREATE TABLE IF NOT EXISTS public.rate_submissions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS public.exchange_rates (
+  id bigserial PRIMARY KEY,
+  base_currency text NOT NULL DEFAULT 'USD',
+  quote_currency text NOT NULL DEFAULT 'PKR',
+  rate numeric(18, 6) NOT NULL CHECK (rate > 0),
+  source text NOT NULL,
+  provider_updated_at timestamptz,
+  fetched_at timestamptz NOT NULL DEFAULT now(),
+  raw jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- ─── TABLE: saved_rates ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.saved_rates (
   id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -63,12 +75,15 @@ CREATE TABLE IF NOT EXISTS public.proposals (
 
 -- ─── Indexes ─────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_rate_submissions_skill_id ON public.rate_submissions(skill_id);
+CREATE INDEX IF NOT EXISTS exchange_rates_latest_idx
+  ON public.exchange_rates(base_currency, quote_currency, fetched_at DESC);
 CREATE INDEX IF NOT EXISTS idx_saved_rates_user_id ON public.saved_rates(user_id);
 CREATE INDEX IF NOT EXISTS idx_proposals_user_id ON public.proposals(user_id);
 
 -- ─── Row Level Security ──────────────────────────────────────
 ALTER TABLE public.saved_rates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposals   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exchange_rates ENABLE ROW LEVEL SECURITY;
 
 -- saved_rates policies
 CREATE POLICY "Users can view own saved_rates"
@@ -105,6 +120,12 @@ CREATE POLICY "Users can update own proposals"
 CREATE POLICY "Users can delete own proposals"
   ON public.proposals FOR DELETE
   USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Public can read exchange rates" ON public.exchange_rates;
+CREATE POLICY "Public can read exchange rates"
+  ON public.exchange_rates FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
 -- ─── Seed skills table ───────────────────────────────────────
 INSERT INTO public.skills (name, category, slug) VALUES

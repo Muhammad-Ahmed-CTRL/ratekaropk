@@ -14,8 +14,18 @@ import { useRateStore, Experience } from '@/lib/store/useRateStore';
 import { categoryOrder, getSkillsByCategory } from '@/lib/marketRates';
 import { getRateBySlug } from '@/lib/rateData';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { formatLastUpdated, formatPKRRate } from '@/lib/currencyFormat';
 import { clsx } from 'clsx';
 import { AlertTriangle, CalendarClock, Database, ExternalLink, Save, ShieldCheck } from 'lucide-react';
+
+type LatestExchangeRate = {
+  ok: boolean;
+  rate: number;
+  source: string;
+  lastUpdated: string;
+  providerUpdatedAt: string | null;
+  stale: boolean;
+};
 
 function CalculatorContent() {
   const {
@@ -30,6 +40,7 @@ function CalculatorContent() {
     setExperience,
     setCity,
     setClientType,
+    setUsdToPkr,
     calculateRate,
     saveRate,
   } = useRateStore();
@@ -39,10 +50,42 @@ function CalculatorContent() {
   const [activeTab, setActiveTab] = useState(selectedCategory);
   const [showShare, setShowShare] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [latestExchange, setLatestExchange] = useState<LatestExchangeRate | null>(null);
+  const [exchangeError, setExchangeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadLatestExchangeRate() {
+      try {
+        // The client only reads RateKaro's saved Supabase-backed rate endpoint.
+        // Third-party FX providers are never called from the browser.
+        const response = await fetch('/api/rates/latest', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Latest exchange rate unavailable');
+
+        const data = (await response.json()) as LatestExchangeRate;
+        if (!ignore && data.ok && Number.isFinite(data.rate)) {
+          setLatestExchange(data);
+          setUsdToPkr(data.rate);
+          setExchangeError(null);
+        }
+      } catch {
+        if (!ignore) {
+          setExchangeError('Exchange rate is currently unavailable. Please try again later.');
+        }
+      }
+    }
+
+    loadLatestExchangeRate();
+
+    return () => {
+      ignore = true;
+    };
+  }, [setUsdToPkr]);
 
   useEffect(() => {
     calculateRate();
-  }, [selectedSkillSlug, experience, city, clientType, calculateRate]);
+  }, [selectedSkillSlug, experience, city, clientType, latestExchange?.rate, calculateRate]);
 
   useEffect(() => {
     const skillSlug = searchParams.get('skill');
@@ -297,8 +340,30 @@ function CalculatorContent() {
                     </div>
                   )}
                   <p className="mt-3">
-                    Source: {calculatedRate.sourceLabel}. USD/PKR: {calculatedRate.usdToPkr.toFixed(2)}
+                    Source: {calculatedRate.sourceLabel}.
                   </p>
+                  <div className="mt-3 rounded-lg border border-[rgba(0,245,196,0.12)] bg-[rgba(0,245,196,0.04)] p-3">
+                    {latestExchange ? (
+                      <div className="space-y-1">
+                        <p className="text-[#E2E2E2]">
+                          Latest saved rate: 1 USD = {formatPKRRate(latestExchange.rate)} PKR
+                        </p>
+                        <p>
+                          Last updated: {formatLastUpdated(latestExchange.lastUpdated)}
+                        </p>
+                        {latestExchange.stale && (
+                          <p className="flex items-start gap-2 text-[#F5A623]">
+                            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                            <span>Showing last saved rate. Today&apos;s automatic update may not have completed.</span>
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-[#F5A623]">
+                        {exchangeError ?? 'Loading latest saved exchange rate...'}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <button onClick={handleSave} className="btn-teal w-full py-4 rounded-xl text-base font-bold flex items-center justify-center gap-2">
                   <Save size={18} />

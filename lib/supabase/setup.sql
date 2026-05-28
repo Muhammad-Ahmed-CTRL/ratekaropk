@@ -103,12 +103,26 @@ CREATE TABLE IF NOT EXISTS public.rate_submissions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS public.exchange_rates (
+  id bigserial PRIMARY KEY,
+  base_currency text NOT NULL DEFAULT 'USD',
+  quote_currency text NOT NULL DEFAULT 'PKR',
+  rate numeric(18, 6) NOT NULL CHECK (rate > 0),
+  source text NOT NULL,
+  provider_updated_at timestamptz,
+  fetched_at timestamptz NOT NULL DEFAULT now(),
+  raw jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_rate_benchmarks_lookup ON public.rate_benchmarks(skill_slug, city, experience, client_type);
 CREATE INDEX IF NOT EXISTS idx_rate_benchmarks_last_updated ON public.rate_benchmarks(last_updated DESC);
 CREATE INDEX IF NOT EXISTS idx_saved_rates_user_id ON public.saved_rates(user_id);
 CREATE INDEX IF NOT EXISTS idx_tax_estimates_user_id ON public.tax_estimates(user_id);
 CREATE INDEX IF NOT EXISTS idx_proposals_user_id ON public.proposals(user_id);
 CREATE INDEX IF NOT EXISTS idx_rate_submissions_skill_id ON public.rate_submissions(skill_id);
+CREATE INDEX IF NOT EXISTS exchange_rates_latest_idx
+  ON public.exchange_rates(base_currency, quote_currency, fetched_at DESC);
 
 ALTER TABLE public.rate_sources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rate_benchmarks ENABLE ROW LEVEL SECURITY;
@@ -116,6 +130,7 @@ ALTER TABLE public.saved_rates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tax_estimates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rate_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exchange_rates ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Anyone can view rate_sources" ON public.rate_sources;
 CREATE POLICY "Anyone can view rate_sources"
@@ -215,6 +230,12 @@ CREATE POLICY "Anyone can view verified rate submissions"
   ON public.rate_submissions FOR SELECT
   TO anon, authenticated
   USING (verified = true);
+
+DROP POLICY IF EXISTS "Public can read exchange rates" ON public.exchange_rates;
+CREATE POLICY "Public can read exchange rates"
+  ON public.exchange_rates FOR SELECT
+  TO anon, authenticated
+  USING (true);
 
 INSERT INTO public.skills (name, category, slug) VALUES
   ('Web Dev', 'Development', 'web-dev'),

@@ -42,8 +42,8 @@ export async function POST(request: Request) {
   const { error: sourceError } = await supabase.from('rate_sources').insert({
     name: `Weekly market refresh - USD/PKR ${exchange.rate.toFixed(2)}`,
     source_type: 'admin_import',
-    source_url: 'https://api.exchangerate-api.com/v4/latest/USD',
-    reliability_weight: exchange.source === 'live' ? 1 : 0.25,
+    source_url: '/api/rates/latest',
+    reliability_weight: exchange.source === 'saved' && !exchange.stale ? 1 : 0.25,
     collected_at: exchange.lastUpdated,
   });
 

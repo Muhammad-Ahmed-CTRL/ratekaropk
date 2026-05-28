@@ -31,9 +31,9 @@
 - **Rate-Integrated Content:** Automatically incorporates computed experience levels and client-friendly rate suggestions inside the proposal pitch.
 - **Save & Retrieve:** Save proposal drafts directly to your user dashboard.
 
-### 4. 💱 Real-Time Currency Check
-- **Live Exchange Rate Engine:** Constantly fetches and checks the current USD-to-PKR conversion rates to keep local estimates accurate.
-- **Dynamic Fallbacks:** Gracefully falls back to high-fidelity static seed rates if third-party exchange rate endpoints fail.
+### 4. USD/PKR Latest Saved Rate
+- **Daily Saved Exchange Rate:** A protected Vercel Cron route fetches USD-to-PKR once per day and stores the result in Supabase.
+- **Safe Fallbacks:** If providers fail, the app keeps using the last saved Supabase rate and shows the last updated date.
 
 ### 5. 🛡️ User Dashboard & Auth
 - **Secure Supabase Authentication:** Quick sign-up and login utilizing email/password verification and social providers.
@@ -116,6 +116,12 @@ OPENAI_PROPOSAL_MODEL=gpt-4o-mini
 
 # Secret protecting the weekly refresh webhook cron job
 MARKET_REFRESH_SECRET=change_me_to_a_long_random_secret
+
+# Secret protecting the daily USD/PKR cron route
+CRON_SECRET=change_me_to_another_long_random_secret
+
+# Optional fallback provider for USD/PKR updates
+EXCHANGERATESAPI_KEY=your_optional_exchangeratesapi_key
 ```
 
 ### 3️⃣ Setup the Supabase Database
@@ -124,9 +130,11 @@ MARKET_REFRESH_SECRET=change_me_to_a_long_random_secret
 3. Copy the entire contents of [lib/supabase/setup.sql](lib/supabase/setup.sql) and paste them into the SQL editor.
 4. Click **Run**. 
 This will automatically:
-- Create the core tables (`skills`, `rate_sources`, `rate_benchmarks`, `saved_rates`, `tax_estimates`, `proposals`, `rate_submissions`).
+- Create the core tables (`skills`, `rate_sources`, `rate_benchmarks`, `exchange_rates`, `saved_rates`, `tax_estimates`, `proposals`, `rate_submissions`).
 - Seed 45+ standard freelance skills with preconfigured slugs and categories.
 - Enable **Row Level Security (RLS)** and register robust security policies protecting user metadata.
+
+If your Supabase database was created before the daily exchange-rate updater existed, run [lib/supabase/exchange_rates.sql](lib/supabase/exchange_rates.sql) once in the SQL editor.
 
 ### 4️⃣ Start Development Server
 ```bash
@@ -154,6 +162,30 @@ curl -X POST https://your-domain.com/api/market-refresh \
 
 - This hook checks live exchange feeds, computes updated benchmark rates based on historical weights, and updates stale parameters.
 - If live rates are low confidence, the application warns the user, and handles graceful offline fallbacks securely.
+
+### Daily USD/PKR Cron
+
+Vercel runs `/api/cron/update-usd-pkr` daily around 03:00 UTC. The route is protected by `CRON_SECRET`, uses the Supabase service role key only on the server, and stores successful USD/PKR provider results in `exchange_rates`. The public calculator reads only `/api/rates/latest`, which uses the anon key and never calls third-party currency APIs from the browser.
+
+Local cron test:
+
+```bash
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/update-usd-pkr
+```
+
+Latest saved rate test:
+
+```bash
+curl http://localhost:3000/api/rates/latest
+```
+
+Production cron test:
+
+```bash
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" https://YOUR_DOMAIN.com/api/cron/update-usd-pkr
+```
+
+If all currency providers fail, the cron route does not overwrite or insert a bad rate. It returns the latest saved Supabase rate when one exists so calculators can keep working with a visible last-updated timestamp.
 
 ---
 

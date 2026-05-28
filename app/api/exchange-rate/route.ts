@@ -8,5 +8,7 @@ export async function GET() {
     rate: exchange.rate,
     source: exchange.source,
     last_updated: exchange.lastUpdated,
+    provider_updated_at: exchange.providerUpdatedAt,
+    stale: exchange.stale ?? false,
   });
 }

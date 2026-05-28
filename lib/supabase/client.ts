@@ -131,6 +131,21 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['rate_sources']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['rate_sources']['Insert']>;
       };
+      exchange_rates: {
+        Row: {
+          id: number;
+          base_currency: string;
+          quote_currency: string;
+          rate: number;
+          source: string;
+          provider_updated_at: string | null;
+          fetched_at: string;
+          raw: unknown;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['exchange_rates']['Row'], 'id' | 'created_at' | 'fetched_at'>;
+        Update: Partial<Database['public']['Tables']['exchange_rates']['Insert']>;
+      };
     };
   };
 };
