@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Calculator, Receipt, FileText, ArrowRight, Zap, Globe, Shield } from 'lucide-react';
 import { Marquee } from '@/components/ui/Marquee';
+import { Reveal, Stagger, StaggerItem } from '@/components/ui/Motion';
 import { getTopRatePages, skillRatePath } from '@/lib/seoConfig';
 
 export default function Home() {
@@ -167,39 +168,39 @@ export default function Home() {
       {/* How it works */}
       <section className="bg-[rgba(255,255,255,0.02)] border-y border-[rgba(255,255,255,0.05)] py-24 mb-32 relative">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <Reveal className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Why use RateKaro?</h2>
             <p className="text-[#8B8B9E] max-w-xl mx-auto">Built specifically for the nuances of the Pakistani freelance ecosystem.</p>
-          </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center mb-6 text-white border border-[rgba(255,255,255,0.1)]">
+          <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <StaggerItem className="interactive-surface flex flex-col items-center rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#111118]/40 px-6 py-8">
+              <div className="soft-float w-16 h-16 rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center mb-6 text-white border border-[rgba(255,255,255,0.1)]">
                 <Globe size={28} />
               </div>
               <h4 className="text-lg font-bold mb-2">Local Context</h4>
               <p className="text-[#8B8B9E] text-sm leading-relaxed">Rates adjusted for major Pakistani cities (Karachi, Lahore, Islamabad) and remote work.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center mb-6 text-white border border-[rgba(255,255,255,0.1)]">
+            </StaggerItem>
+            <StaggerItem className="interactive-surface flex flex-col items-center rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#111118]/40 px-6 py-8">
+              <div className="soft-float w-16 h-16 rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center mb-6 text-white border border-[rgba(255,255,255,0.1)]">
                 <Zap size={28} />
               </div>
               <h4 className="text-lg font-bold mb-2">Live Currency Check</h4>
               <p className="text-[#8B8B9E] text-sm leading-relaxed">See PKR and USD ranges with a live exchange check and a clearly labeled fallback when the feed is unavailable.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center mb-6 text-white border border-[rgba(255,255,255,0.1)]">
+            </StaggerItem>
+            <StaggerItem className="interactive-surface flex flex-col items-center rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#111118]/40 px-6 py-8">
+              <div className="soft-float w-16 h-16 rounded-full bg-[rgba(255,255,255,0.05)] flex items-center justify-center mb-6 text-white border border-[rgba(255,255,255,0.1)]">
                 <Shield size={28} />
               </div>
               <h4 className="text-lg font-bold mb-2">PSEB Integrated</h4>
               <p className="text-[#8B8B9E] text-sm leading-relaxed">Tax calculations include official PSEB IT export exemptions (0.25%) built right in.</p>
-            </div>
-          </div>
+            </StaggerItem>
+          </Stagger>
         </div>
       </section>
 
       <section className="max-w-7xl mx-auto px-6 mb-32 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+        <Reveal className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
           <div>
             <h2 className="text-3xl font-bold mb-3">Popular Pakistan freelance rate guides</h2>
             <p className="text-[#8B8B9E] max-w-2xl">
@@ -210,32 +211,33 @@ export default function Home() {
           <Link href="/calculator" className="inline-flex items-center gap-2 text-[#00F5C4] font-semibold">
             Open calculator <ArrowRight size={16} />
           </Link>
-        </div>
+        </Reveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {topRatePages.map((skill) => (
-            <Link
-              key={skill.slug}
-              href={skillRatePath(skill.slug)}
-              className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4 text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4] transition-colors"
-            >
-              <span className="block text-sm font-semibold">{skill.skill} rates</span>
-              <span className="block mt-1 text-xs text-[#8B8B9E]">
-                {skill.category} · Pakistan hourly benchmark
-              </span>
-            </Link>
+            <StaggerItem key={skill.slug}>
+              <Link
+                href={skillRatePath(skill.slug)}
+                className="interactive-surface block rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4 text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4]"
+              >
+                <span className="block text-sm font-semibold">{skill.skill} rates</span>
+                <span className="block mt-1 text-xs text-[#8B8B9E]">
+                  {skill.category} - Pakistan hourly benchmark
+                </span>
+              </Link>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       </section>
 
       <section className="max-w-5xl mx-auto px-6 mb-32 relative z-10">
-        <div className="mb-8 text-center">
+        <Reveal className="mb-8 text-center">
           <h2 className="text-3xl font-bold mb-3">Freelancer pricing questions</h2>
           <p className="text-[#8B8B9E]">
             Short answers for common Pakistan freelancer rate, tax, and proposal searches.
           </p>
-        </div>
-        <div className="space-y-3">
+        </Reveal>
+        <Stagger className="space-y-3">
           {[
             {
               question: 'How do Pakistani freelancers calculate hourly rates?',
@@ -258,15 +260,14 @@ export default function Home() {
                 'No. RateKaro PK provides market-estimated benchmarks and calculators for planning. Final pricing, tax filing, and client negotiation decisions remain your responsibility.',
             },
           ].map((item) => (
-            <details
-              key={item.question}
-              className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4"
-            >
-              <summary className="cursor-pointer font-semibold text-white">{item.question}</summary>
-              <p className="mt-3 text-sm leading-relaxed text-[#8B8B9E]">{item.answer}</p>
-            </details>
+            <StaggerItem key={item.question}>
+              <details className="interactive-surface rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-5 py-4">
+                <summary className="cursor-pointer font-semibold text-white">{item.question}</summary>
+                <p className="mt-3 text-sm leading-relaxed text-[#8B8B9E]">{item.answer}</p>
+              </details>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       </section>
 
       {/* CTA Section */}

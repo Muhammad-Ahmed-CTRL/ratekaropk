@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Calculator, Database, HelpCircle, ShieldCheck } from 'lucide-react';
+import { Reveal, Stagger, StaggerItem } from '@/components/ui/Motion';
 import { rateData } from '@/lib/rateData';
 import { absoluteUrl, skillLongTailKeywords, skillRatePath, siteName } from '@/lib/seoConfig';
 import { confidenceLabel, formatCurrency, getSkillBenchmarks } from '@/lib/seoMarket';
@@ -68,10 +69,10 @@ export default async function SkillRatePage({ params }: PageProps) {
     {
       q: `What affects ${skill.skill} freelance rates?`,
       a: `Several key factors influence freelance rates for ${skill.skill.toLowerCase()} in Pakistan:
-• Experience level: Senior practitioners charge significantly more.
-• Client location: Foreign clients command USD rates, while local Pakistani clients pay in PKR.
-• Technical specialization: Specific sub-skills, frameworks, or tools can command premium rates.
-• Project complexity and urgency: High-priority or extremely complex tasks dictate higher fees.`,
+- Experience level: Senior practitioners charge significantly more.
+- Client location: Foreign clients command USD rates, while local Pakistani clients pay in PKR.
+- Technical specialization: Specific sub-skills, frameworks, or tools can command premium rates.
+- Project complexity and urgency: High-priority or extremely complex tasks dictate higher fees.`,
     },
     {
       q: `Are these ${skill.skill} rates guaranteed?`,
@@ -157,7 +158,7 @@ export default async function SkillRatePage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd) }}
       />
 
-      <div className="mb-10">
+      <Reveal className="mb-10">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#8B8B9E] mb-3">
           {skill.category} rate benchmark
         </p>
@@ -169,11 +170,12 @@ export default async function SkillRatePage({ params }: PageProps) {
           local clients and foreign clients. Use this page as a benchmark, then calculate your own
           rate with city, experience, and client context.
         </p>
-      </div>
+      </Reveal>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-8">
-          <section className="rounded-2xl border border-[rgba(0,245,196,0.18)] bg-[#111118] overflow-hidden">
+          <Reveal>
+            <section className="interactive-surface rounded-2xl border border-[rgba(0,245,196,0.18)] bg-[#111118] overflow-hidden">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-5 border-b border-[rgba(255,255,255,0.06)]">
               <div>
                 <h2 className="text-xl font-semibold text-[#00F5C4]">Remote hourly benchmarks</h2>
@@ -209,7 +211,7 @@ export default async function SkillRatePage({ params }: PageProps) {
                         return exp || a.client_type.localeCompare(b.client_type);
                       })
                       .map((row) => (
-                        <tr key={`${row.experience}-${row.client_type}`} className="border-t border-[rgba(255,255,255,0.06)]">
+                        <tr key={`${row.experience}-${row.client_type}`} className="border-t border-[rgba(255,255,255,0.06)] transition-colors hover:bg-[rgba(0,245,196,0.04)]">
                           <td className="px-5 py-4 capitalize text-white">{row.experience}</td>
                           <td className="px-5 py-4 capitalize text-[#E2E2E2]">{row.client_type}</td>
                           <td className="px-5 py-4 font-mono text-[#F5A623]">
@@ -221,7 +223,7 @@ export default async function SkillRatePage({ params }: PageProps) {
                           <td className="px-5 py-4 text-[#8B8B9E]">
                             <span className="inline-flex items-center gap-2">
                               <ShieldCheck size={14} className="text-[#00F5C4]" />
-                              {confidenceLabel(row.confidence_score)} · {row.source_count} source
+                              {confidenceLabel(row.confidence_score)} - {row.source_count} source
                               {row.source_count === 1 ? '' : 's'}
                             </span>
                             <span className="block mt-1 text-xs">
@@ -253,105 +255,118 @@ export default async function SkillRatePage({ params }: PageProps) {
                 </div>
               </div>
             )}
-          </section>
+            </section>
+          </Reveal>
 
           {/* Source and Trust Notes Section */}
           {hasBenchmarks && (
-            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <ShieldCheck size={20} className="text-[#00F5C4]" />
-                Source & Trust Benchmarks
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-[#A7A7B7] border-b border-[rgba(255,255,255,0.06)] pb-6 mb-6">
-                <div>
-                  <span className="text-[#8B8B9E] block text-xs uppercase tracking-wider mb-1">Confidence Score</span>
-                  <span className="text-white font-semibold text-base">{confidenceLabel(maxConfidence)}</span>
+            <Reveal>
+              <section className="interactive-surface rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-6">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <ShieldCheck size={20} className="text-[#00F5C4]" />
+                  Source & Trust Benchmarks
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-[#A7A7B7] border-b border-[rgba(255,255,255,0.06)] pb-6 mb-6">
+                  <div>
+                    <span className="text-[#8B8B9E] block text-xs uppercase tracking-wider mb-1">Confidence Score</span>
+                    <span className="text-white font-semibold text-base">{confidenceLabel(maxConfidence)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#8B8B9E] block text-xs uppercase tracking-wider mb-1">Total Verified Sources</span>
+                    <span className="text-white font-semibold text-base">{totalSources} sources</span>
+                  </div>
+                  <div>
+                    <span className="text-[#8B8B9E] block text-xs uppercase tracking-wider mb-1">Last Updated</span>
+                    <span className="text-white font-semibold text-base">{lastUpdatedDate.toLocaleDateString('en-PK')}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[#8B8B9E] block text-xs uppercase tracking-wider mb-1">Total Verified Sources</span>
-                  <span className="text-white font-semibold text-base">{totalSources} sources</span>
-                </div>
-                <div>
-                  <span className="text-[#8B8B9E] block text-xs uppercase tracking-wider mb-1">Last Updated</span>
-                  <span className="text-white font-semibold text-base">{lastUpdatedDate.toLocaleDateString('en-PK')}</span>
-                </div>
-              </div>
-              {/* Display source notes if they exist */}
-              {benchmarks.some((b) => b.source_notes) && (
-                <div className="text-xs text-[#8B8B9E] leading-relaxed">
-                  <span className="text-white font-semibold block mb-1 text-sm">Source Notes:</span>
-                  <p className="bg-[#0A0A0F] border border-[rgba(255,255,255,0.05)] rounded-xl p-4 text-[#A7A7B7]">
-                    {benchmarks.find((b) => b.source_notes)?.source_notes}
-                  </p>
-                </div>
-              )}
-            </section>
+                {/* Display source notes if they exist */}
+                {benchmarks.some((b) => b.source_notes) && (
+                  <div className="text-xs text-[#8B8B9E] leading-relaxed">
+                    <span className="text-white font-semibold block mb-1 text-sm">Source Notes:</span>
+                    <p className="bg-[#0A0A0F] border border-[rgba(255,255,255,0.05)] rounded-xl p-4 text-[#A7A7B7]">
+                      {benchmarks.find((b) => b.source_notes)?.source_notes}
+                    </p>
+                  </div>
+                )}
+              </section>
+            </Reveal>
           )}
 
           {/* FAQ Section */}
-          <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-6">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <HelpCircle size={24} className="text-[#00F5C4]" />
-              Frequently Asked Questions (FAQ)
-            </h2>
-            <div className="space-y-6">
-              {faqs.map((faq, index) => (
-                <div key={index} className="border-b border-[rgba(255,255,255,0.06)] pb-6 last:border-b-0 last:pb-0">
-                  <h3 className="font-semibold text-white text-base mb-2 flex items-start gap-2">
-                    <span className="text-[#00F5C4] font-mono">Q.</span>
-                    {faq.q}
-                  </h3>
-                  <div className="text-[#A7A7B7] text-sm leading-relaxed pl-5 whitespace-pre-line">
-                    {faq.a}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <Reveal>
+            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-6">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <HelpCircle size={24} className="text-[#00F5C4]" />
+                Frequently Asked Questions (FAQ)
+              </h2>
+              <Stagger className="space-y-4">
+                {faqs.map((faq, index) => (
+                  <StaggerItem key={index}>
+                    <div className="interactive-surface rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F]/50 p-4">
+                      <h3 className="font-semibold text-white text-base mb-2 flex items-start gap-2">
+                        <span className="text-[#00F5C4] font-mono">Q.</span>
+                        {faq.q}
+                      </h3>
+                      <div className="text-[#A7A7B7] text-sm leading-relaxed pl-5 whitespace-pre-line">
+                        {faq.a}
+                      </div>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </Stagger>
+            </section>
+          </Reveal>
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-[#8B8B9E] mb-4">
-              Best for searches like
-            </h2>
-            <ul className="space-y-3 text-sm text-[#E2E2E2]">
-              {skillLongTailKeywords(skill.skill).map((keyword) => (
-                <li key={keyword}>{keyword}</li>
-              ))}
-            </ul>
-          </section>
+          <Reveal delay={0.05}>
+            <section className="interactive-surface rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5">
+              <h2 className="text-sm font-semibold uppercase tracking-widest text-[#8B8B9E] mb-4">
+                Best for searches like
+              </h2>
+              <ul className="space-y-3 text-sm text-[#E2E2E2]">
+                {skillLongTailKeywords(skill.skill).map((keyword) => (
+                  <li key={keyword}>{keyword}</li>
+                ))}
+              </ul>
+            </section>
+          </Reveal>
 
-          <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-[#8B8B9E] mb-4">
-              Related rate pages
-            </h2>
-            <div className="flex flex-col gap-3">
-              {relatedSkills.map((related) => (
-                <Link
-                  key={related.slug}
-                  href={skillRatePath(related.slug)}
-                  className="inline-flex items-center justify-between gap-3 rounded-xl border border-[rgba(255,255,255,0.08)] px-4 py-3 text-sm text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4] transition-colors"
-                >
-                  {related.skill}
-                  <ArrowRight size={14} />
-                </Link>
-              ))}
-            </div>
-          </section>
+          <Reveal delay={0.1}>
+            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5">
+              <h2 className="text-sm font-semibold uppercase tracking-widest text-[#8B8B9E] mb-4">
+                Related rate pages
+              </h2>
+              <div className="flex flex-col gap-3">
+                {relatedSkills.map((related) => (
+                  <Link
+                    key={related.slug}
+                    href={skillRatePath(related.slug)}
+                    className="interactive-surface inline-flex items-center justify-between gap-3 rounded-xl border border-[rgba(255,255,255,0.08)] px-4 py-3 text-sm text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4]"
+                  >
+                    {related.skill}
+                    <ArrowRight size={14} />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </Reveal>
         </aside>
       </div>
 
-      <section className="mt-10 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#0A0A0F] p-6">
-        <h2 className="text-2xl font-semibold text-white mb-3">
-          How to set your {skill.skill.toLowerCase()} rate
-        </h2>
-        <p className="text-[#A7A7B7] leading-relaxed">
-          Start with the benchmark range for your experience level, then adjust for portfolio
-          strength, niche complexity, turnaround time, client geography, and project risk. For
-          international clients, quote in USD and keep PKR as your internal planning number.
-        </p>
-      </section>
+      <Reveal>
+        <section className="interactive-surface mt-10 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#0A0A0F] p-6">
+          <h2 className="text-2xl font-semibold text-white mb-3">
+            How to set your {skill.skill.toLowerCase()} rate
+          </h2>
+          <p className="text-[#A7A7B7] leading-relaxed">
+            Start with the benchmark range for your experience level, then adjust for portfolio
+            strength, niche complexity, turnaround time, client geography, and project risk. For
+            international clients, quote in USD and keep PKR as your internal planning number.
+          </p>
+        </section>
+      </Reveal>
     </div>
   );
 }

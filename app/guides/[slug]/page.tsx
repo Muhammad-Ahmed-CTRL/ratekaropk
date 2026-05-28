@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, BookOpen, Calculator, CheckSquare, ExternalLink, HelpCircle, Landmark, ShieldAlert } from 'lucide-react';
+import { Reveal, Stagger, StaggerItem } from '@/components/ui/Motion';
 import { absoluteUrl, siteName } from '@/lib/seoConfig';
 
 type PageProps = {
@@ -199,7 +200,7 @@ const guidesData: Record<string, GuideContent> = {
     lastUpdated: 'May 2026',
     readTime: '6 min read',
     category: 'Tax Code',
-    intro: 'FBR Section 154A of the Income Tax Ordinance is the premier legal statute governing tax deductions on the export of IT and IT-enabled services in Pakistan. It institutes a Final Tax Regime (FTR) designed to incentivize the inflow of foreign currency. Let’s demystify how this tax code works and how you can ensure your banking partners comply with the 0.25% withholding rate.',
+    intro: 'FBR Section 154A of the Income Tax Ordinance is the premier legal statute governing tax deductions on the export of IT and IT-enabled services in Pakistan. It institutes a Final Tax Regime (FTR) designed to incentivize the inflow of foreign currency. Let us demystify how this tax code works and how you can ensure your banking partners comply with the 0.25% withholding rate.',
     sections: [
       {
         h2: 'Demystifying Section 154A of the Income Tax Ordinance',
@@ -446,18 +447,21 @@ export default async function GuidePage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd) }}
       />
 
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors mb-8 group"
-      >
-        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-        Back to Home
-      </Link>
+      <Reveal>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm text-[#8B8B9E] hover:text-[#00F5C4] transition-colors mb-8 group"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          Back to Home
+        </Link>
+      </Reveal>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-10">
         <article className="space-y-8">
           {/* Header */}
-          <header className="border-b border-[rgba(255,255,255,0.06)] pb-8">
+          <Reveal>
+            <header className="border-b border-[rgba(255,255,255,0.06)] pb-8">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[rgba(0,245,196,0.08)] border border-[rgba(0,245,196,0.2)] text-[#00F5C4] mb-4">
               <BookOpen size={12} />
               {guide.category} Guide
@@ -467,103 +471,117 @@ export default async function GuidePage({ params }: PageProps) {
             </h1>
             <div className="flex flex-wrap items-center gap-4 text-xs text-[#8B8B9E] font-medium">
               <span>Published: {guide.lastUpdated}</span>
-              <span>•</span>
+              <span>-</span>
               <span>{guide.readTime}</span>
             </div>
-          </header>
+            </header>
+          </Reveal>
 
           {/* Intro */}
-          <p className="text-lg text-[#E2E2E2] leading-relaxed font-medium bg-[#111118] border-l-4 border-[#00F5C4] p-5 rounded-r-xl">
-            {guide.intro}
-          </p>
+          <Reveal delay={0.05}>
+            <p className="interactive-surface text-lg text-[#E2E2E2] leading-relaxed font-medium bg-[#111118] border-l-4 border-[#00F5C4] p-5 rounded-r-xl">
+              {guide.intro}
+            </p>
+          </Reveal>
 
           {/* Content sections */}
-          <div className="space-y-10 text-[#A7A7B7] leading-relaxed">
+          <Stagger className="space-y-6 text-[#A7A7B7] leading-relaxed">
             {guide.sections.map((section, idx) => (
-              <section key={idx} className="space-y-4">
-                <h2 className="text-2xl font-bold text-white tracking-tight border-b border-[rgba(255,255,255,0.04)] pb-2">
-                  {section.h2}
-                </h2>
-                <p className="text-sm md:text-base">{section.body}</p>
+              <StaggerItem key={idx}>
+                <section className="interactive-surface space-y-4 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118]/70 p-5 md:p-6">
+                  <h2 className="text-2xl font-bold text-white tracking-tight border-b border-[rgba(255,255,255,0.04)] pb-2">
+                    {section.h2}
+                  </h2>
+                  <p className="text-sm md:text-base">{section.body}</p>
 
-                {section.subsections && (
-                  <div className="space-y-6 mt-4 pl-4 border-l border-[rgba(255,255,255,0.06)]">
-                    {section.subsections.map((sub, sIdx) => (
-                      <div key={sIdx} className="space-y-2">
-                        <h3 className="text-lg font-semibold text-white">
-                          {sub.h3}
-                        </h3>
-                        <p className="text-sm">{sub.body}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
+                  {section.subsections && (
+                    <div className="space-y-6 mt-4 pl-4 border-l border-[rgba(255,255,255,0.06)]">
+                      {section.subsections.map((sub, sIdx) => (
+                        <div key={sIdx} className="space-y-2">
+                          <h3 className="text-lg font-semibold text-white">
+                            {sub.h3}
+                          </h3>
+                          <p className="text-sm">{sub.body}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
 
           {/* Disclaimer Alert Box */}
-          <div className="rounded-xl border border-[rgba(245,166,35,0.25)] bg-[rgba(245,166,35,0.04)] p-5 text-sm text-[#E2E2E2]">
-            <div className="flex items-start gap-3">
-              <ShieldAlert size={20} className="text-[#F5A623] shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold text-white block mb-1">Tax Disclaimer</span>
-                <p className="text-xs text-[#A7A7B7] leading-relaxed">
-                  {guide.disclaimer}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Internal Conversion Callouts */}
-          <section className="rounded-2xl border border-[rgba(0,245,196,0.18)] bg-[#111118] p-6 space-y-6">
-            <h3 className="text-xl font-bold text-white">Optimize Your Tax Liability Now</h3>
-            <p className="text-sm text-[#A7A7B7] leading-relaxed">
-              Use our public finance calculators to accurately model your local and foreign freelance rates, and see how registering with PSEB can instantly save you up to 75% on withholding tax deductions.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Link
-                href="/tax"
-                className="btn-teal inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-center"
-              >
-                <Calculator size={16} />
-                Open Tax Calculator
-              </Link>
-              <Link
-                href="/calculator"
-                className="btn-outline inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-center border-[rgba(255,255,255,0.1)] hover:border-[#00F5C4] text-white hover:text-[#00F5C4]"
-              >
-                Freelancer Rate Calculator
-              </Link>
-            </div>
-          </section>
-
-          {/* FAQ Section */}
-          <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <HelpCircle size={24} className="text-[#00F5C4]" />
-              FAQ on Freelancer Tax in Pakistan
-            </h2>
-            <div className="space-y-6">
-              {guide.faqs.map((faq, index) => (
-                <div key={index} className="border-b border-[rgba(255,255,255,0.06)] pb-6 last:border-b-0 last:pb-0">
-                  <h3 className="font-semibold text-white text-base mb-2 flex items-start gap-2">
-                    <span className="text-[#00F5C4] font-mono">Q.</span>
-                    {faq.q}
-                  </h3>
-                  <p className="text-[#A7A7B7] text-sm leading-relaxed pl-5 whitespace-pre-line">
-                    {faq.a}
+          <Reveal>
+            <div className="interactive-surface rounded-xl border border-[rgba(245,166,35,0.25)] bg-[rgba(245,166,35,0.04)] p-5 text-sm text-[#E2E2E2]">
+              <div className="flex items-start gap-3">
+                <ShieldAlert size={20} className="text-[#F5A623] shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-white block mb-1">Tax Disclaimer</span>
+                  <p className="text-xs text-[#A7A7B7] leading-relaxed">
+                    {guide.disclaimer}
                   </p>
                 </div>
-              ))}
+              </div>
             </div>
-          </section>
+          </Reveal>
+
+          {/* Internal Conversion Callouts */}
+          <Reveal>
+            <section className="interactive-surface rounded-2xl border border-[rgba(0,245,196,0.18)] bg-[#111118] p-6 space-y-6">
+              <h3 className="text-xl font-bold text-white">Optimize Your Tax Liability Now</h3>
+              <p className="text-sm text-[#A7A7B7] leading-relaxed">
+                Use our public finance calculators to accurately model your local and foreign freelance rates, and see how registering with PSEB can instantly save you up to 75% on withholding tax deductions.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                <Link
+                  href="/tax"
+                  className="btn-teal inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-center"
+                >
+                  <Calculator size={16} />
+                  Open Tax Calculator
+                </Link>
+                <Link
+                  href="/calculator"
+                  className="btn-outline inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-center border-[rgba(255,255,255,0.1)] hover:border-[#00F5C4] text-white hover:text-[#00F5C4]"
+                >
+                  Freelancer Rate Calculator
+                </Link>
+              </div>
+            </section>
+          </Reveal>
+
+          {/* FAQ Section */}
+          <Reveal>
+            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-6 md:p-8">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <HelpCircle size={24} className="text-[#00F5C4]" />
+                FAQ on Freelancer Tax in Pakistan
+              </h2>
+              <Stagger className="space-y-4">
+                {guide.faqs.map((faq, index) => (
+                  <StaggerItem key={index}>
+                    <div className="interactive-surface rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F]/50 p-4">
+                      <h3 className="font-semibold text-white text-base mb-2 flex items-start gap-2">
+                        <span className="text-[#00F5C4] font-mono">Q.</span>
+                        {faq.q}
+                      </h3>
+                      <p className="text-[#A7A7B7] text-sm leading-relaxed pl-5 whitespace-pre-line">
+                        {faq.a}
+                      </p>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </Stagger>
+            </section>
+          </Reveal>
         </article>
 
         {/* Sidebar */}
         <aside className="space-y-6">
           {/* Related Guides */}
-          <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5">
+          <Reveal delay={0.05}>
+            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5">
             <h3 className="text-sm font-semibold uppercase tracking-widest text-[#8B8B9E] mb-4">
               More Freelancer Guides
             </h3>
@@ -572,17 +590,19 @@ export default async function GuidePage({ params }: PageProps) {
                 <Link
                   key={sibling.slug}
                   href={`/guides/${sibling.slug}`}
-                  className="group flex flex-col gap-1 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F]/50 px-4 py-3 text-sm text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4] transition-all"
+                  className="interactive-surface group flex flex-col gap-1 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F]/50 px-4 py-3 text-sm text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4]"
                 >
                   <span className="font-semibold group-hover:text-[#00F5C4] transition-colors">{sibling.title}</span>
                   <span className="text-xs text-[#8B8B9E]">{sibling.readTime}</span>
                 </Link>
               ))}
             </div>
-          </section>
+            </section>
+          </Reveal>
 
           {/* Official Resources */}
-          <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5 space-y-4">
+          <Reveal delay={0.1}>
+            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5 space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-widest text-[#8B8B9E] flex items-center gap-2">
               <Landmark size={14} className="text-[#00F5C4]" />
               Official Resources
@@ -592,7 +612,7 @@ export default async function GuidePage({ params }: PageProps) {
                 href="https://fbr.gov.pk"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 text-sm text-[#E2E2E2] hover:text-[#00F5C4] transition-colors bg-[#0A0A0F] border border-[rgba(255,255,255,0.04)] px-4 py-3 rounded-xl"
+                className="interactive-surface flex items-center justify-between gap-3 text-sm text-[#E2E2E2] hover:text-[#00F5C4] bg-[#0A0A0F] border border-[rgba(255,255,255,0.04)] px-4 py-3 rounded-xl"
               >
                 FBR Pakistan Portal
                 <ExternalLink size={12} />
@@ -601,39 +621,42 @@ export default async function GuidePage({ params }: PageProps) {
                 href="https://pseb.org.pk"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 text-sm text-[#E2E2E2] hover:text-[#00F5C4] transition-colors bg-[#0A0A0F] border border-[rgba(255,255,255,0.04)] px-4 py-3 rounded-xl"
+                className="interactive-surface flex items-center justify-between gap-3 text-sm text-[#E2E2E2] hover:text-[#00F5C4] bg-[#0A0A0F] border border-[rgba(255,255,255,0.04)] px-4 py-3 rounded-xl"
               >
                 PSEB Official Site
                 <ExternalLink size={12} />
               </a>
             </div>
-          </section>
+            </section>
+          </Reveal>
 
           {/* Quick FBR Checklist summary card */}
-          <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5 space-y-4">
+          <Reveal delay={0.15}>
+            <section className="interactive-surface rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111118] p-5 space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-widest text-[#8B8B9E] flex items-center gap-2">
               <CheckSquare size={14} className="text-[#00F5C4]" />
               FBR Filing Essentials
             </h3>
             <ul className="space-y-2.5 text-xs text-[#A7A7B7]">
               <li className="flex items-start gap-2">
-                <span className="text-[#00F5C4]">•</span>
+                <span className="text-[#00F5C4]">-</span>
                 Active NTN & Iris login
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[#00F5C4]">•</span>
+                <span className="text-[#00F5C4]">-</span>
                 Digital Payment Certificates (e-PRCs)
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[#00F5C4]">•</span>
+                <span className="text-[#00F5C4]">-</span>
                 Active PSEB certification
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-[#00F5C4]">•</span>
+                <span className="text-[#00F5C4]">-</span>
                 Wealth statement reconciliation
               </li>
             </ul>
-          </section>
+            </section>
+          </Reveal>
         </aside>
       </div>
     </div>
