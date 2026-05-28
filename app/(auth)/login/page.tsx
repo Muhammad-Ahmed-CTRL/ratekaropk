@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
@@ -12,11 +12,14 @@ function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
   const supabase = createClient();
-  const redirect = searchParams.get('redirect') || '/calculator';
+  const requestedRedirect = searchParams.get('redirect') || '/calculator';
+  const redirect =
+    requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//')
+      ? requestedRedirect
+      : '/calculator';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,15 +30,15 @@ function LoginForm() {
       password,
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       toast.show(error.message, 'error');
       return;
     }
 
+    await supabase.auth.getSession();
     toast.show('Successfully logged in');
-    router.push(redirect);
+    window.location.assign(redirect);
   };
 
   const handleGoogleLogin = async () => {

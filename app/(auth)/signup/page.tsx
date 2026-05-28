@@ -21,7 +21,11 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const supabase = createClient();
-  const redirect = searchParams.get('redirect') || '/calculator';
+  const requestedRedirect = searchParams.get('redirect') || '/calculator';
+  const redirect =
+    requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//')
+      ? requestedRedirect
+      : '/calculator';
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,19 +43,20 @@ function SignupForm() {
       },
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       toast.show(error.message, 'error');
       return;
     }
 
     if (data.session) {
+      await supabase.auth.getSession();
       toast.show('Account created successfully.');
-      router.push(redirect);
+      window.location.assign(redirect);
       return;
     }
 
+    setLoading(false);
     toast.show('Account created. Please check your email to verify, then sign in.');
     router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
   };

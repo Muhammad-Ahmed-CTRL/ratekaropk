@@ -2,26 +2,54 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Copy, Share2, Download, AlertCircle } from 'lucide-react';
-import { useRateStore } from '@/lib/store/useRateStore';
+import { Sparkles, Copy, Share2, Download, AlertCircle, Info } from 'lucide-react';
+import { useRateStore, type ClientType, type Experience } from '@/lib/store/useRateStore';
 import { useToast } from '@/components/ui/Toast';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+
+const experienceLabels: Record<Experience, string> = {
+  junior: 'Junior',
+  mid: 'Mid',
+  senior: 'Senior',
+};
+
+const clientTypeLabels: Record<ClientType, string> = {
+  local: 'Local',
+  foreign: 'Foreign',
+};
 
 function ProposalsContent() {
   const { calculatedRate, selectedSkillName, experience, clientType } = useRateStore();
   const [isMounted, setIsMounted] = useState(false);
   const [projectDescription, setProjectDescription] = useState('');
+  const [serviceRole, setServiceRole] = useState('');
+  const [proposalExperience, setProposalExperience] = useState<Experience>('mid');
+  const [proposalClientType, setProposalClientType] = useState<ClientType>('foreign');
   const [rateInput, setRateInput] = useState<number>(0);
   const [proposal, setProposal] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [initializedFromCalculator, setInitializedFromCalculator] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     setIsMounted(true);
-    if (calculatedRate?.usdMid) {
+  }, []);
+
+  useEffect(() => {
+    if (!initializedFromCalculator && calculatedRate?.usdMid) {
+      setServiceRole(selectedSkillName);
+      setProposalExperience(experience);
+      setProposalClientType(clientType);
       setRateInput(calculatedRate.usdMid);
+      setInitializedFromCalculator(true);
     }
-  }, [calculatedRate]);
+  }, [calculatedRate, clientType, experience, initializedFromCalculator, selectedSkillName]);
+
+  const hasCalculatorContext = Boolean(calculatedRate?.usdMid);
+
+  const calculatorContextLabel = hasCalculatorContext
+    ? `${experienceLabels[experience]} ${selectedSkillName} - ${clientTypeLabels[clientType]} client - $${calculatedRate?.usdMid}/hr`
+    : 'No calculator result loaded yet';
 
   if (!isMounted) {
     return (
@@ -37,6 +65,16 @@ function ProposalsContent() {
       return;
     }
 
+    if (!serviceRole.trim()) {
+      toast.show('Please enter the service role for this proposal', 'error');
+      return;
+    }
+
+    if (!Number.isFinite(rateInput) || rateInput <= 0) {
+      toast.show('Please enter a valid hourly rate', 'error');
+      return;
+    }
+
     setIsGenerating(true);
     setProposal('');
 
@@ -47,12 +85,16 @@ function ProposalsContent() {
         body: JSON.stringify({
           projectDescription,
           rate: rateInput,
-          clientType,
-          skill: `${experience} ${selectedSkillName}`
+          clientType: proposalClientType,
+          skill: serviceRole.trim(),
+          experience: proposalExperience,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to generate proposal');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate proposal');
+      }
       
       const data = await response.json();
       setProposal(data.proposal);
@@ -68,6 +110,26 @@ function ProposalsContent() {
     if (!proposal) return;
     navigator.clipboard.writeText(proposal);
     toast.show('Proposal copied to clipboard!');
+  };
+
+  const handleShare = async () => {
+    if (!proposal) return;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'RateKaro PK proposal',
+          text: proposal,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          toast.show('Unable to share proposal', 'error');
+        }
+      }
+      return;
+    }
+
+    handleCopy();
   };
 
   const handleDownloadPDF = () => {
@@ -109,26 +171,75 @@ function ProposalsContent() {
             <p className="text-[#8B8B9E] text-xs text-right">{projectDescription.length} chars</p>
           </div>
 
-          <div className="bg-[#111118] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-xs font-bold text-[#8B8B9E] tracking-widest uppercase mb-1">Calculated Rate</h2>
-              <p className="text-[11px] text-[#8B8B9E]">From Calculator ({clientType} client)</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[#F5A623] font-bold">$</span>
+          <div className="bg-[#111118] border border-[rgba(255,255,255,0.05)] rounded-2xl p-6">
+            <h2 className="text-xs font-bold text-[#8B8B9E] tracking-widest uppercase mb-4">Proposal Details</h2>
+
+            {hasCalculatorContext && (
+              <div className="mb-4 flex items-start gap-3 rounded-xl border border-[rgba(0,245,196,0.16)] bg-[rgba(0,245,196,0.06)] px-4 py-3">
+                <Info size={16} className="mt-0.5 shrink-0 text-[#00F5C4]" />
+                <p className="text-xs leading-relaxed text-[#B8B8C8]">
+                  Loaded from calculator: <span className="font-semibold text-white">{calculatorContextLabel}</span>. Edit these fields if this proposal is for another service.
+                </p>
+              </div>
+            )}
+
+            <label className="block mb-4">
+              <span className="block text-xs font-semibold text-[#8B8B9E] uppercase tracking-wider mb-2">Service Role</span>
               <input
-                type="number"
-                value={rateInput}
-                onChange={(e) => setRateInput(Number(e.target.value))}
-                className="w-20 bg-[#0A0A0F] border border-[rgba(255,255,255,0.1)] focus:border-[#00F5C4] rounded-lg px-2 py-1 text-white font-numbers font-bold outline-none text-right"
+                type="text"
+                value={serviceRole}
+                onChange={(e) => setServiceRole(e.target.value)}
+                placeholder="e.g. Web Developer, Podcast Editor"
+                className="w-full bg-[#0A0A0F] border border-[rgba(255,255,255,0.1)] focus:border-[#00F5C4] rounded-xl px-4 py-3 text-white outline-none transition-colors"
               />
-              <span className="text-[#8B8B9E] text-sm">/hr</span>
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <label className="block">
+                <span className="block text-xs font-semibold text-[#8B8B9E] uppercase tracking-wider mb-2">Experience</span>
+                <select
+                  value={proposalExperience}
+                  onChange={(e) => setProposalExperience(e.target.value as Experience)}
+                  className="w-full bg-[#0A0A0F] border border-[rgba(255,255,255,0.1)] focus:border-[#00F5C4] rounded-xl px-4 py-3 text-white outline-none transition-colors"
+                >
+                  <option value="junior">Junior</option>
+                  <option value="mid">Mid</option>
+                  <option value="senior">Senior</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="block text-xs font-semibold text-[#8B8B9E] uppercase tracking-wider mb-2">Client Base</span>
+                <select
+                  value={proposalClientType}
+                  onChange={(e) => setProposalClientType(e.target.value as ClientType)}
+                  className="w-full bg-[#0A0A0F] border border-[rgba(255,255,255,0.1)] focus:border-[#00F5C4] rounded-xl px-4 py-3 text-white outline-none transition-colors"
+                >
+                  <option value="local">Local Client</option>
+                  <option value="foreign">Foreign Client</option>
+                </select>
+              </label>
             </div>
+
+            <label className="block">
+              <span className="block text-xs font-semibold text-[#8B8B9E] uppercase tracking-wider mb-2">Hourly Rate</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[#F5A623] font-bold">$</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={rateInput || ''}
+                  onChange={(e) => setRateInput(Number(e.target.value))}
+                  className="w-28 bg-[#0A0A0F] border border-[rgba(255,255,255,0.1)] focus:border-[#00F5C4] rounded-lg px-3 py-2 text-white font-numbers font-bold outline-none text-right"
+                />
+                <span className="text-[#8B8B9E] text-sm">/hr</span>
+              </div>
+            </label>
           </div>
 
           <button
             onClick={handleGenerate}
-            disabled={isGenerating || !projectDescription.trim()}
+            disabled={isGenerating || !projectDescription.trim() || !serviceRole.trim() || rateInput <= 0}
             className="btn-teal w-full py-4 rounded-xl text-base font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? (
@@ -151,7 +262,7 @@ function ProposalsContent() {
                 <button onClick={handleCopy} disabled={!proposal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[rgba(255,255,255,0.1)] text-[#8B8B9E] hover:text-white transition-colors disabled:opacity-50">
                   <Copy size={16} />
                 </button>
-                <button onClick={handleCopy} disabled={!proposal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[rgba(255,255,255,0.1)] text-[#8B8B9E] hover:text-white transition-colors disabled:opacity-50">
+                <button onClick={handleShare} disabled={!proposal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[rgba(255,255,255,0.1)] text-[#8B8B9E] hover:text-white transition-colors disabled:opacity-50">
                   <Share2 size={16} />
                 </button>
                 <button onClick={handleDownloadPDF} disabled={!proposal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[rgba(255,255,255,0.1)] text-[#8B8B9E] hover:text-white transition-colors disabled:opacity-50">

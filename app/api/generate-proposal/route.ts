@@ -3,6 +3,24 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import OpenAI from 'openai';
 
+function cleanProposalText(value: string) {
+  return value
+    .replace(/\r\n/g, '\n')
+    .replace(/^```(?:\w+)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s*>\s?/gm, '')
+    .replace(/^\s*[*]\s+/gm, '- ')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+    .replace(/\[(?:insert|your|client|company|name|contact)[^\]]*\]/gi, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export async function POST(request: Request) {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -48,31 +66,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please sign in to generate and save proposals.' }, { status: 401 });
     }
 
-    const { projectDescription, rate, clientType, skill } = await request.json();
+    const { projectDescription, rate, clientType, skill, experience } = await request.json();
+    const numericRate = Number(rate);
+    const serviceRole = typeof skill === 'string' ? skill.trim() : '';
+    const experienceLabel =
+      experience === 'junior' || experience === 'mid' || experience === 'senior'
+        ? experience
+        : 'mid';
+    const clientTypeLabel = clientType === 'local' ? 'local' : 'foreign';
+    const roleLabel = `${experienceLabel} ${serviceRole}`.trim();
 
-    if (!projectDescription || !rate) {
+    if (!projectDescription || !Number.isFinite(numericRate) || numericRate <= 0 || !serviceRole) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    const systemPrompt = `You are a professional Pakistani freelancer named "${userName}" pitching to a ${clientType} client for a ${skill} role at $${rate}/hr. Write a high-converting, winning proposal.
+    const systemPrompt = `You are a professional Pakistani freelancer named "${userName}" pitching to a ${clientTypeLabel} client for a ${roleLabel} role at $${numericRate}/hr. Write a high-converting, ready-to-send proposal.
 
 CRITICAL INSTRUCTIONS:
-- Use the actual rate of $${rate}/hr directly in your sentences. Do NOT write placeholders like "[Rate]" or "[Rate]/hr".
-- Use the actual skill "${skill}" directly in your sentences. Do NOT write placeholders like "[Skill]" or "[Your Skill]".
+- Output plain text only. Do not use Markdown, bold markers, asterisks, hashtags, tables, or code fences.
+- Use the actual rate of $${numericRate}/hr directly in your sentences. Do NOT write placeholders like "[Rate]" or "[Rate]/hr".
+- Use the actual role "${roleLabel}" directly in your sentences. Do NOT write placeholders like "[Skill]" or "[Your Skill]".
 - DO NOT USE ANY BRACKETS OR PLACEHOLDERS like "[Insert Name]", "[Your Name]", "[Your Contact Info]", "[Insert Company]", "[Client Name]", etc.
-- You MUST sign off the proposal as "${userName}". For example: "Best regards, ${userName} | ${skill}" or similar.
+- Write as an individual freelancer using "I", not "we/us", unless the client explicitly asks for an agency/team.
+- Do not add headings like "Why Choose Us" or "Why Choose Me". Keep it like a natural client message.
+- You MUST sign off the proposal as "${userName}". For example: "Best regards, ${userName} | ${serviceRole}" or similar.
 - Every single word must be ready to be sent. Brackets like "[ ]" are strictly forbidden in the entire output.
 
-Structure:
-1. Project Understanding (hook them, show you read their needs)
-2. Proposed Solution (how you'll solve it)
-3. Timeline & Process (brief)
-4. Budget/Rate (explicitly write "$${rate}/hr" in the text and justify it with your expertise as a ${skill})
-5. Why Me (highlight Pakistani work ethic, specific skill expertise)
-6. Call to Action
+Use this clean message flow without printed section headings:
+1. Greeting and direct acknowledgement of the project.
+2. Two to three short paragraphs explaining your understanding and approach.
+3. One concise timeline/process sentence.
+4. One concise rate sentence that mentions "$${numericRate}/hr" and connects it to the ${serviceRole} work.
+5. Confident closing and sign-off.
 
 Keep it concise, confident, and professional. Use a natural, persuasive tone.`;
 
@@ -87,7 +115,7 @@ Keep it concise, confident, and professional. Use a natural, persuasive tone.`;
           apiKey: openrouterKey,
           baseURL: 'https://openrouter.ai/api/v1',
           defaultHeaders: {
-            'HTTP-Referer': 'https://ratekaro.pk',
+            'HTTP-Referer': 'https://ratekaropk.site',
             'X-Title': 'RateKaro PK',
           }
         });
@@ -98,7 +126,7 @@ Keep it concise, confident, and professional. Use a natural, persuasive tone.`;
             { role: "system", content: systemPrompt },
             { role: "user", content: `Client Project Description: ${projectDescription}` }
           ],
-          temperature: 0.7,
+          temperature: 0.45,
           max_tokens: 800,
         });
 
@@ -134,7 +162,7 @@ Keep it concise, confident, and professional. Use a natural, persuasive tone.`;
               parts: [{ text: systemPrompt }],
             },
             generationConfig: {
-              temperature: 0.7,
+              temperature: 0.45,
               maxOutputTokens: 800,
             },
           }),
@@ -169,8 +197,8 @@ Keep it concise, confident, and professional. Use a natural, persuasive tone.`;
             { role: "system", content: systemPrompt },
             { role: "user", content: `Client Project Description: ${projectDescription}` }
           ],
-          temperature: 0.7,
-          max_tokens: 500,
+          temperature: 0.45,
+          max_tokens: 700,
         });
 
         proposal = completion.choices[0].message.content || '';
@@ -187,16 +215,20 @@ Keep it concise, confident, and professional. Use a natural, persuasive tone.`;
       throw new Error('All configured AI Backends failed to generate a proposal.');
     }
 
-    console.log('--- GENERATED PROPOSAL START ---');
-    console.log(proposal);
-    console.log('--- GENERATED PROPOSAL END ---');
+    proposal = cleanProposalText(proposal);
+
+    if (!proposal) {
+      throw new Error('Generated proposal was empty after cleanup.');
+    }
+
+    console.log(`Generated proposal successfully (${proposal.length} chars).`);
 
     let saveError = null;
     if (session) {
       const { error } = await supabase.from('proposals').insert({
         user_id: session.user.id,
         project_description: projectDescription,
-        rate_used: rate,
+        rate_used: numericRate,
         generated_text: proposal,
       });
       saveError = error;

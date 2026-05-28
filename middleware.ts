@@ -57,12 +57,18 @@ export async function middleware(request: NextRequest) {
 
   if (isProtected && !user && !isDevProposals) {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
+    loginUrl.searchParams.set('redirect', `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL('/calculator', request.url));
+    const redirectParam = request.nextUrl.searchParams.get('redirect') || '/calculator';
+    const safeRedirect =
+      redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+        ? redirectParam
+        : '/calculator';
+
+    return NextResponse.redirect(new URL(safeRedirect, request.url));
   }
 
   return response;
