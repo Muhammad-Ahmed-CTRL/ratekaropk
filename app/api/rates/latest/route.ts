@@ -19,9 +19,12 @@ export async function GET() {
     );
   }
 
-  // Public clients read only the latest saved rate with the anon key.
+  // Next.js caches fetch requests by default. We must explicitly disable caching for Supabase client.
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false },
+    global: {
+      fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }),
+    },
   });
 
   const { data, error } = await supabase

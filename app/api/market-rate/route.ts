@@ -104,7 +104,13 @@ export async function GET(request: Request) {
     try {
       const supabase = createClient<RateKaroDatabase>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: { persistSession: false },
+          global: {
+            fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }),
+          },
+        }
       );
 
       const { data, error } = await getBenchmark(

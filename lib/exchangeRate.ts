@@ -28,6 +28,9 @@ export async function getUsdToPkrRate(): Promise<ExchangeRateResult> {
     // Third-party FX providers are only called by the protected cron route.
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: false },
+      global: {
+        fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }),
+      },
     });
 
     const { data, error } = await supabase
