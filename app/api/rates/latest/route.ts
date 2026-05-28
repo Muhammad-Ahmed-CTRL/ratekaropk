@@ -12,6 +12,7 @@ export async function GET() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing env var: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
     return NextResponse.json(
       { ok: false, error: 'Exchange rate is not configured' },
       { status: 500 }
@@ -33,7 +34,7 @@ export async function GET() {
     .maybeSingle();
 
   if (error) {
-    console.error('Failed to read latest USD/PKR rate:', error.message);
+    console.error('Supabase read error (latest USD/PKR rate):', error.message);
     return NextResponse.json(
       { ok: false, error: 'Exchange rate is currently unavailable' },
       { status: 500 }
@@ -41,6 +42,7 @@ export async function GET() {
   }
 
   if (!data) {
+    console.error('No saved rate found in public.exchange_rates');
     return NextResponse.json(
       { ok: false, error: 'No saved exchange rate exists' },
       { status: 404 }

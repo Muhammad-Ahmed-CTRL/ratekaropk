@@ -134,7 +134,7 @@ async function fetchLatestRate(): Promise<{ result: ProviderResult | null; error
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown provider error';
       errors.push({ source: provider.source, message });
-      console.error(`USD/PKR provider failed (${provider.source}):`, message);
+      console.error(`Provider fetch error (${provider.source}):`, message);
     }
   }
 
@@ -154,6 +154,7 @@ export async function GET(request: Request) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
+    console.error('Missing env var: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     return NextResponse.json(
       { ok: false, error: 'Missing server Supabase configuration' },
       { status: 500 }
@@ -182,7 +183,7 @@ export async function GET(request: Request) {
       .single();
 
     if (error) {
-      console.error('Failed to insert USD/PKR rate:', error.message);
+      console.error('Supabase insert error (USD/PKR rate):', error.message);
       return NextResponse.json(
         { ok: false, error: 'Failed to save exchange rate', errors },
         { status: 500 }
@@ -210,7 +211,7 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   if (error) {
-    console.error('Failed to read latest saved USD/PKR rate:', error.message);
+    console.error('Supabase read error (latest saved USD/PKR rate):', error.message);
   }
 
   return NextResponse.json(
