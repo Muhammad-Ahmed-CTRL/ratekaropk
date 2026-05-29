@@ -42,15 +42,17 @@ interface Proposal {
   created_at: string;
 }
 
-type DashboardTab = 'rates' | 'tax' | 'proposals';
+type DashboardTab = 'rates' | 'tax' | 'proposals' | 'profile';
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<{ id: string; user_metadata: { full_name?: string } } | null>(null);
+  const [user, setUser] = useState<{ id: string; email?: string; user_metadata: { full_name?: string; avatar_url?: string } } | null>(null);
   const [rates, setRates] = useState<SavedRate[]>([]);
   const [taxEstimates, setTaxEstimates] = useState<TaxEstimate[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [fullName, setFullName] = useState('');
   const [activeTab, setActiveTab] = useState<DashboardTab>('rates');
   const [expandedProposals, setExpandedProposals] = useState<Record<string, boolean>>({});
 
@@ -71,6 +73,7 @@ export default function DashboardPage() {
     }
 
     setUser(session.user);
+    setFullName(session.user.user_metadata?.full_name || '');
 
     const [ratesResult, taxResult, proposalsResult] = await Promise.all([
       supabase
@@ -164,6 +167,31 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    const cleanName = fullName.trim();
+    if (!cleanName) {
+      toast.show('Please enter your name.', 'error');
+      return;
+    }
+
+    setSavingProfile(true);
+
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: { full_name: cleanName },
+      });
+
+      if (error) throw error;
+
+      setUser(data.user);
+      toast.show('Profile settings updated.');
+    } catch {
+      toast.show('Profile update failed. Please try again.', 'error');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-16">
@@ -231,10 +259,18 @@ export default function DashboardPage() {
             <Calculator size={18} />
             New Calculation
           </button>
-          <div className="text-[#8B8B9E] px-4 py-3 rounded-xl flex items-center gap-3 font-medium">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={clsx(
+              'px-4 py-3 rounded-xl flex items-center gap-3 font-medium transition-colors text-left',
+              activeTab === 'profile'
+                ? 'bg-[rgba(255,255,255,0.05)] text-white border border-[rgba(255,255,255,0.1)]'
+                : 'text-[#8B8B9E] hover:bg-[rgba(255,255,255,0.02)]'
+            )}
+          >
             <User size={18} />
             Profile Settings
-          </div>
+          </button>
         </div>
 
         <div className="lg:col-span-3">
@@ -356,6 +392,53 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 )}
+              </>
+            )}
+
+            {activeTab === 'profile' && (
+              <>
+                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                  <User size={20} className="text-[#00F5C4]" />
+                  Profile Settings
+                </h2>
+
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+                  <div className="bg-[#0A0A0F] border border-[rgba(255,255,255,0.05)] rounded-xl p-5">
+                    <label className="block">
+                      <span className="text-xs font-semibold text-[#8B8B9E] uppercase tracking-widest">Full name</span>
+                      <input
+                        value={fullName}
+                        onChange={(event) => setFullName(event.target.value)}
+                        className="mt-2 w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111118] px-4 py-3 text-white outline-none transition-colors focus:border-[#00F5C4]"
+                        placeholder="Your name"
+                      />
+                    </label>
+
+                    <div className="mt-5 rounded-xl border border-[rgba(255,255,255,0.05)] bg-[#111118] p-4">
+                      <p className="text-xs font-semibold text-[#8B8B9E] uppercase tracking-widest mb-1">Account email</p>
+                      <p className="text-sm text-[#E2E2E2] break-all">{user?.email || 'No email available'}</p>
+                    </div>
+
+                    <button
+                      onClick={handleSaveProfile}
+                      disabled={savingProfile}
+                      className="btn-teal mt-5 px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-60"
+                    >
+                      {savingProfile ? 'Saving...' : 'Save Profile Settings'}
+                    </button>
+                  </div>
+
+                  <div className="bg-[#0A0A0F] border border-[rgba(0,245,196,0.12)] rounded-xl p-5">
+                    <div className="w-14 h-14 rounded-full bg-[rgba(0,245,196,0.12)] border border-[rgba(0,245,196,0.3)] flex items-center justify-center mb-4">
+                      <User size={24} className="text-[#00F5C4]" />
+                    </div>
+                    <h3 className="font-bold text-white">{fullName || 'Freelancer'}</h3>
+                    <p className="text-xs text-[#8B8B9E] mt-1 break-all">{user?.email}</p>
+                    <p className="text-sm text-[#8B8B9E] mt-4">
+                      This name is used across your dashboard and account profile. Saved rates, tax estimates, and proposals remain protected by Supabase RLS.
+                    </p>
+                  </div>
+                </div>
               </>
             )}
           </div>
