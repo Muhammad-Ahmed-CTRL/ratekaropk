@@ -1,6 +1,6 @@
 import { rateData } from '@/lib/rateData';
 
-export const siteUrl = 'https://www.ratekaropk.site';
+export const siteUrl = 'https://ratekaropk.site';
 export const siteName = 'RateKaro PK';
 export const defaultOgImage = '/opengraph-image';
 

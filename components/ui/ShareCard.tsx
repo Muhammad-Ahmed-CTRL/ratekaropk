@@ -14,7 +14,7 @@ interface ShareCardProps {
 export function ShareCard({ usdMid, experience, skill, city }: ShareCardProps) {
   const [copied, setCopied] = useState(false);
   
-  const text = `I charge $${usdMid}/hr as a ${experience} ${skill} in ${city === 'remote' ? 'Remote (PK)' : city}.\n\nCalculated via RateKaro PK\nhttps://www.ratekaropk.site/calculator`;
+  const text = `I charge $${usdMid}/hr as a ${experience} ${skill} in ${city === 'remote' ? 'Remote (PK)' : city}.\n\nCalculated via RateKaro PK\nhttps://ratekaropk.site/calculator`;
   
   const handleCopy = () => {
     navigator.clipboard.writeText(text);

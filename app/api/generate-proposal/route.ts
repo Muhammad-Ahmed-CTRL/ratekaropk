@@ -116,7 +116,7 @@ WORLD-CLASS PROPOSAL STRUCTURE (Do not print these section headings, just use bl
           apiKey: openrouterKey,
           baseURL: 'https://openrouter.ai/api/v1',
           defaultHeaders: {
-            'HTTP-Referer': 'https://www.ratekaropk.site',
+            'HTTP-Referer': 'https://ratekaropk.site',
             'X-Title': 'RateKaro PK',
           }
         });
