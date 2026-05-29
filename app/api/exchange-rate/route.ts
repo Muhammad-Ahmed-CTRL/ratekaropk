@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getUsdToPkrRate } from '@/lib/exchangeRate';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const exchange = await getUsdToPkrRate();
 

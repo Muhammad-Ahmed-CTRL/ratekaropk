@@ -16,7 +16,7 @@ import { getRateBySlug } from '@/lib/rateData';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { formatLastUpdated, formatPKRRate } from '@/lib/currencyFormat';
 import { clsx } from 'clsx';
-import { AlertTriangle, CalendarClock, Database, ExternalLink, Save, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Briefcase, CalendarClock, Clock3, Database, ExternalLink, Save, ShieldCheck } from 'lucide-react';
 
 type LatestExchangeRate = {
   ok: boolean;
@@ -26,6 +26,8 @@ type LatestExchangeRate = {
   providerUpdatedAt: string | null;
   stale: boolean;
 };
+
+type PricingMode = 'hourly' | 'project';
 
 function CalculatorContent() {
   const {
@@ -52,6 +54,8 @@ function CalculatorContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [latestExchange, setLatestExchange] = useState<LatestExchangeRate | null>(null);
   const [exchangeError, setExchangeError] = useState<string | null>(null);
+  const [pricingMode, setPricingMode] = useState<PricingMode>('hourly');
+  const [projectHours, setProjectHours] = useState(20);
 
   useEffect(() => {
     let ignore = false;
@@ -148,6 +152,17 @@ function CalculatorContent() {
 
   const cities = ['Remote', 'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Peshawar', 'Quetta', 'Multan'];
   const currentSkills = getSkillsByCategory(activeTab);
+  const safeProjectHours = Math.max(1, Math.min(1000, projectHours || 1));
+  const projectEstimate = calculatedRate
+    ? {
+        usdLow: Math.round(calculatedRate.usdLow * safeProjectHours),
+        usdMid: Math.round(calculatedRate.usdMid * safeProjectHours),
+        usdHigh: Math.round(calculatedRate.usdHigh * safeProjectHours),
+        pkrLow: Math.round(calculatedRate.pkrLow * safeProjectHours),
+        pkrMid: Math.round(calculatedRate.pkrMid * safeProjectHours),
+        pkrHigh: Math.round(calculatedRate.pkrHigh * safeProjectHours),
+      }
+    : null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-32">
@@ -262,6 +277,59 @@ function CalculatorContent() {
               </div>
             </section>
           </div>
+
+          <section>
+            <h2 className="text-xs font-semibold text-[#8B8B9E] uppercase tracking-widest mb-4">Pricing Output</h2>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_180px] gap-3">
+              <div className="segmented-control w-full p-1">
+                {([
+                  { value: 'hourly', label: 'Hourly', icon: Clock3 },
+                  { value: 'project', label: 'Project Total', icon: Briefcase },
+                ] as const).map((option) => {
+                  const Icon = option.icon;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setPricingMode(option.value)}
+                      className={clsx(
+                        'segmented-option py-3 flex items-center justify-center gap-2',
+                        pricingMode === option.value && 'active'
+                      )}
+                    >
+                      <Icon size={16} />
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <AnimatePresence>
+                {pricingMode === 'project' && (
+                  <motion.label
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="rounded-xl border border-[rgba(255,255,255,0.1)] bg-[#111118] px-4 py-2"
+                  >
+                    <span className="block text-[10px] font-semibold uppercase tracking-widest text-[#8B8B9E]">Estimated hours</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={1000}
+                      value={projectHours}
+                      onChange={(event) => setProjectHours(Number(event.target.value))}
+                      className="mt-1 w-full bg-transparent text-lg font-semibold text-white outline-none"
+                    />
+                  </motion.label>
+                )}
+              </AnimatePresence>
+            </div>
+            {pricingMode === 'project' && (
+              <p className="mt-3 text-xs text-[#8B8B9E]">
+                Project total is calculated from the verified hourly benchmark multiplied by your estimated hours.
+              </p>
+            )}
+          </section>
         </div>
 
         {/* Right Panel: Results */}
@@ -271,8 +339,12 @@ function CalculatorContent() {
           ) : (
             <GlowCard className="flex flex-col h-full">
               <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.05)] pb-4 mb-6">
-                <h3 className="text-lg font-semibold text-[#00F5C4]">Estimated Market Rate</h3>
-                <span className="text-[10px] font-bold bg-[rgba(255,255,255,0.1)] text-[#8B8B9E] px-2 py-1 rounded tracking-wider">HOURLY</span>
+                <h3 className="text-lg font-semibold text-[#00F5C4]">
+                  {pricingMode === 'project' ? 'Estimated Project Cost' : 'Estimated Market Rate'}
+                </h3>
+                <span className="text-[10px] font-bold bg-[rgba(255,255,255,0.1)] text-[#8B8B9E] px-2 py-1 rounded tracking-wider">
+                  {pricingMode === 'project' ? `${safeProjectHours} HRS` : 'HOURLY'}
+                </span>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-6 sm:gap-0">
@@ -281,10 +353,10 @@ function CalculatorContent() {
                   <span className="text-[10px] font-bold text-[#8B8B9E] tracking-widest mb-1">LOW</span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-[#F5A623] text-lg font-bold">$</span>
-                    <CountUp to={calculatedRate.usdLow} className="text-3xl font-bold text-[#F5A623] font-numbers" />
+                    <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.usdLow : calculatedRate.usdLow} className="text-3xl font-bold text-[#F5A623] font-numbers" />
                   </div>
                   <div className="flex items-baseline gap-1 mt-1 text-[#8B8B9E] text-xs font-numbers">
-                    Rs <CountUp to={calculatedRate.pkrLow} />
+                    Rs <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.pkrLow : calculatedRate.pkrLow} />
                   </div>
                 </div>
 
@@ -293,10 +365,10 @@ function CalculatorContent() {
                   <span className="text-[11px] font-bold text-[#00F5C4] tracking-widest mb-1">MID</span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-[#F5A623] text-2xl font-bold">$</span>
-                    <CountUp to={calculatedRate.usdMid} className="text-5xl font-bold text-[#F5A623] font-numbers drop-shadow-[0_0_15px_rgba(245,166,35,0.3)]" />
+                    <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.usdMid : calculatedRate.usdMid} className="text-5xl font-bold text-[#F5A623] font-numbers drop-shadow-[0_0_15px_rgba(245,166,35,0.3)]" />
                   </div>
                   <div className="flex items-baseline gap-1 mt-2 text-[#E2E2E2] text-sm font-numbers">
-                    Rs <CountUp to={calculatedRate.pkrMid} />
+                    Rs <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.pkrMid : calculatedRate.pkrMid} />
                   </div>
                 </div>
 
@@ -305,13 +377,18 @@ function CalculatorContent() {
                   <span className="text-[10px] font-bold text-[#8B8B9E] tracking-widest mb-1">HIGH</span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-[#F5A623] text-lg font-bold">$</span>
-                    <CountUp to={calculatedRate.usdHigh} className="text-3xl font-bold text-[#F5A623] font-numbers" />
+                    <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.usdHigh : calculatedRate.usdHigh} className="text-3xl font-bold text-[#F5A623] font-numbers" />
                   </div>
                   <div className="flex items-baseline gap-1 mt-1 text-[#8B8B9E] text-xs font-numbers">
-                    Rs <CountUp to={calculatedRate.pkrHigh} />
+                    Rs <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.pkrHigh : calculatedRate.pkrHigh} />
                   </div>
                 </div>
               </div>
+              {pricingMode === 'project' && (
+                <div className="mb-5 rounded-xl border border-[rgba(245,166,35,0.16)] bg-[rgba(245,166,35,0.06)] p-3 text-xs text-[#E2E2E2]">
+                  Based on {safeProjectHours} estimated hours at the current hourly market benchmark. Adjust hours for scope, revisions, meetings, and project risk.
+                </div>
+              )}
 
               <div className="flex flex-col gap-3 mt-auto">
                 <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0A0A0F] p-4 text-xs text-[#8B8B9E]">
