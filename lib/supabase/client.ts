@@ -55,6 +55,8 @@ export type Database = {
           skill: string;
           experience: string;
           city: string;
+          country_code: string;
+          currency_code: string;
           client_type: string;
           pkr_low: number;
           pkr_mid: number;
@@ -102,6 +104,8 @@ export type Database = {
           skill_name: string;
           category: string;
           city: string;
+          country_code: string;
+          currency_code: string;
           experience: 'junior' | 'mid' | 'senior';
           client_type: 'local' | 'foreign';
           pkr_low: number;
@@ -112,6 +116,7 @@ export type Database = {
           usd_high: number;
           source_count: number;
           confidence_score: number;
+          source_notes: string | null;
           last_updated: string;
           created_at: string;
         };

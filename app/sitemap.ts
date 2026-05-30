@@ -93,12 +93,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const ratePages: MetadataRoute.Sitemap = rateData.map((skill) => ({
+  /* Pakistan rate pages — /rates/[slug] */
+  const pkRatePages: MetadataRoute.Sitemap = rateData.map((skill) => ({
     url: `${siteUrl}${skillRatePath(skill.slug)}`,
     lastModified,
-    changeFrequency: 'weekly',
+    changeFrequency: 'weekly' as const,
     priority: skill.slug === 'web-dev' ? 0.85 : 0.72,
   }));
 
-  return [...corePages, ...seoLandingPages, ...guidePages, ...ratePages];
+  /* Global Lite — India rate pages — /rates/india/[slug] */
+  const indiaRatePages: MetadataRoute.Sitemap = rateData.map((skill) => ({
+    url: `${siteUrl}/rates/india/${skill.slug}`,
+    lastModified,
+    changeFrequency: 'monthly' as const,
+    priority: 0.55,
+  }));
+
+  /* Global Lite — Bangladesh rate pages — /rates/bangladesh/[slug] */
+  const bangladeshRatePages: MetadataRoute.Sitemap = rateData.map((skill) => ({
+    url: `${siteUrl}/rates/bangladesh/${skill.slug}`,
+    lastModified,
+    changeFrequency: 'monthly' as const,
+    priority: 0.55,
+  }));
+
+  return [
+    ...corePages,
+    ...seoLandingPages,
+    ...guidePages,
+    ...pkRatePages,
+    ...indiaRatePages,
+    ...bangladeshRatePages,
+  ];
 }

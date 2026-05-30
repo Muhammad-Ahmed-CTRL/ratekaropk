@@ -15,12 +15,14 @@ import { categoryOrder, getSkillsByCategory } from '@/lib/marketRates';
 import { getRateBySlug } from '@/lib/rateData';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { formatLastUpdated, formatPKRRate } from '@/lib/currencyFormat';
+import { formatLocalCurrency, getCountryByCode, globalLiteCountries } from '@/lib/countryConfig';
 import { clsx } from 'clsx';
 import { AlertTriangle, Briefcase, CalendarClock, Clock3, Database, ExternalLink, Save, ShieldCheck } from 'lucide-react';
 
 type LatestExchangeRate = {
   ok: boolean;
   rate: number;
+  quoteCurrency: string;
   source: string;
   lastUpdated: string;
   providerUpdatedAt: string | null;
@@ -35,12 +37,14 @@ function CalculatorContent() {
     selectedCategory,
     experience,
     city,
+    country,
     clientType,
     calculatedRate,
     isCalculating,
     setSkill,
     setExperience,
     setCity,
+    setCountry,
     setClientType,
     setUsdToPkr,
     calculateRate,
@@ -56,6 +60,7 @@ function CalculatorContent() {
   const [exchangeError, setExchangeError] = useState<string | null>(null);
   const [pricingMode, setPricingMode] = useState<PricingMode>('hourly');
   const [projectHours, setProjectHours] = useState(20);
+  const selectedCountry = getCountryByCode(country);
 
   useEffect(() => {
     let ignore = false;
@@ -64,7 +69,7 @@ function CalculatorContent() {
       try {
         // The client only reads RateKaro's saved Supabase-backed rate endpoint.
         // Third-party FX providers are never called from the browser.
-        const response = await fetch('/api/rates/latest', { cache: 'no-store' });
+        const response = await fetch(`/api/rates/latest?quote=${selectedCountry.currency}`, { cache: 'no-store' });
         if (!response.ok) throw new Error('Latest exchange rate unavailable');
 
         const data = (await response.json()) as LatestExchangeRate;
@@ -85,11 +90,11 @@ function CalculatorContent() {
     return () => {
       ignore = true;
     };
-  }, [setUsdToPkr]);
+  }, [selectedCountry.currency, setUsdToPkr]);
 
   useEffect(() => {
     calculateRate();
-  }, [selectedSkillSlug, experience, city, clientType, latestExchange?.rate, calculateRate]);
+  }, [selectedSkillSlug, experience, city, country, clientType, latestExchange?.rate, calculateRate]);
 
   useEffect(() => {
     const skillSlug = searchParams.get('skill');
@@ -132,10 +137,12 @@ function CalculatorContent() {
           skill: saved.skill,
           experience: saved.experience,
           city: saved.city,
+          country_code: saved.country,
+          currency_code: saved.rate.localCurrency,
           client_type: saved.clientType,
-          pkr_low: saved.rate.pkrLow,
-          pkr_mid: saved.rate.pkrMid,
-          pkr_high: saved.rate.pkrHigh,
+          pkr_low: saved.rate.localLow,
+          pkr_mid: saved.rate.localMid,
+          pkr_high: saved.rate.localHigh,
           usd_low: saved.rate.usdLow,
           usd_mid: saved.rate.usdMid,
           usd_high: saved.rate.usdHigh,
@@ -158,9 +165,9 @@ function CalculatorContent() {
         usdLow: Math.round(calculatedRate.usdLow * safeProjectHours),
         usdMid: Math.round(calculatedRate.usdMid * safeProjectHours),
         usdHigh: Math.round(calculatedRate.usdHigh * safeProjectHours),
-        pkrLow: Math.round(calculatedRate.pkrLow * safeProjectHours),
-        pkrMid: Math.round(calculatedRate.pkrMid * safeProjectHours),
-        pkrHigh: Math.round(calculatedRate.pkrHigh * safeProjectHours),
+        localLow: Math.round(calculatedRate.localLow * safeProjectHours),
+        localMid: Math.round(calculatedRate.localMid * safeProjectHours),
+        localHigh: Math.round(calculatedRate.localHigh * safeProjectHours),
       }
     : null;
 
@@ -174,6 +181,28 @@ function CalculatorContent() {
       <div className="flex flex-col lg:flex-row gap-10">
         {/* Left Panel: Inputs */}
         <div className="w-full lg:w-[60%] flex flex-col gap-10">
+          <section>
+            <h2 className="text-xs font-semibold text-[#8B8B9E] uppercase tracking-widest mb-4">Market Country</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {globalLiteCountries.map((option) => (
+                <button
+                  key={option.code}
+                  onClick={() => setCountry(option.code)}
+                  className={clsx(
+                    'rounded-2xl border px-4 py-4 text-left transition-colors',
+                    country === option.code
+                      ? 'border-[#00F5C4] bg-[rgba(0,245,196,0.08)] text-white'
+                      : 'border-[rgba(255,255,255,0.1)] bg-[#111118] text-[#8B8B9E] hover:border-[rgba(255,255,255,0.3)] hover:text-white'
+                  )}
+                >
+                  <span className="block text-sm font-semibold">{option.name}</span>
+                  <span className="mt-1 block text-xs">
+                    {option.code === 'PK' ? 'Full PKR, city, PSEB/FBR context' : `${option.currency} rate benchmarks only`}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
           
           {/* Skill Selection */}
           <section>
@@ -228,26 +257,34 @@ function CalculatorContent() {
           </section>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-            {/* Location Context */}
-            <section>
-              <h2 className="text-xs font-semibold text-[#8B8B9E] uppercase tracking-widest mb-4">Location Context</h2>
-              <div className="flex flex-wrap gap-2">
-                {cities.map(c => (
-                  <button
-                    key={c}
-                    onClick={() => setCity(c.toLowerCase())}
-                    className={clsx(
-                      'px-4 py-1.5 rounded-full text-xs font-medium transition-colors border',
-                      city === c.toLowerCase() 
-                        ? 'border-[#00F5C4] text-[#00F5C4] bg-[rgba(0,245,196,0.08)]' 
-                        : 'border-[rgba(255,255,255,0.1)] text-[#8B8B9E] hover:border-[rgba(255,255,255,0.3)] hover:text-white'
-                    )}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </section>
+            {selectedCountry.supportsCityContext ? (
+              <section>
+                <h2 className="text-xs font-semibold text-[#8B8B9E] uppercase tracking-widest mb-4">Location Context</h2>
+                <div className="flex flex-wrap gap-2">
+                  {cities.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setCity(c.toLowerCase())}
+                      className={clsx(
+                        'px-4 py-1.5 rounded-full text-xs font-medium transition-colors border',
+                        city === c.toLowerCase() 
+                          ? 'border-[#00F5C4] text-[#00F5C4] bg-[rgba(0,245,196,0.08)]' 
+                          : 'border-[rgba(255,255,255,0.1)] text-[#8B8B9E] hover:border-[rgba(255,255,255,0.3)] hover:text-white'
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <section>
+                <h2 className="text-xs font-semibold text-[#8B8B9E] uppercase tracking-widest mb-4">Location Context</h2>
+                <div className="rounded-xl border border-[rgba(245,166,35,0.18)] bg-[rgba(245,166,35,0.06)] p-4 text-sm text-[#E2E2E2]">
+                  {selectedCountry.name} is in Global Lite mode. Rates use remote-country benchmarks only; local tax and city adjustments are not available yet.
+                </div>
+              </section>
+            )}
 
             {/* Client Base */}
             <section>
@@ -355,9 +392,9 @@ function CalculatorContent() {
                     <span className="text-[#F5A623] text-lg font-bold">$</span>
                     <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.usdLow : calculatedRate.usdLow} className="text-3xl font-bold text-[#F5A623] font-numbers" />
                   </div>
-                  <div className="flex items-baseline gap-1 mt-1 text-[#8B8B9E] text-xs font-numbers">
-                    Rs <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.pkrLow : calculatedRate.pkrLow} />
-                  </div>
+                  <p className="mt-1 text-[#8B8B9E] text-xs font-numbers">
+                    {formatLocalCurrency(pricingMode === 'project' && projectEstimate ? projectEstimate.localLow : calculatedRate.localLow, selectedCountry)}
+                  </p>
                 </div>
 
                 {/* MID (Primary) */}
@@ -367,9 +404,9 @@ function CalculatorContent() {
                     <span className="text-[#F5A623] text-2xl font-bold">$</span>
                     <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.usdMid : calculatedRate.usdMid} className="text-5xl font-bold text-[#F5A623] font-numbers drop-shadow-[0_0_15px_rgba(245,166,35,0.3)]" />
                   </div>
-                  <div className="flex items-baseline gap-1 mt-2 text-[#E2E2E2] text-sm font-numbers">
-                    Rs <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.pkrMid : calculatedRate.pkrMid} />
-                  </div>
+                  <p className="mt-2 text-[#E2E2E2] text-sm font-numbers">
+                    {formatLocalCurrency(pricingMode === 'project' && projectEstimate ? projectEstimate.localMid : calculatedRate.localMid, selectedCountry)}
+                  </p>
                 </div>
 
                 {/* HIGH */}
@@ -379,9 +416,9 @@ function CalculatorContent() {
                     <span className="text-[#F5A623] text-lg font-bold">$</span>
                     <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.usdHigh : calculatedRate.usdHigh} className="text-3xl font-bold text-[#F5A623] font-numbers" />
                   </div>
-                  <div className="flex items-baseline gap-1 mt-1 text-[#8B8B9E] text-xs font-numbers">
-                    Rs <CountUp to={pricingMode === 'project' && projectEstimate ? projectEstimate.pkrHigh : calculatedRate.pkrHigh} />
-                  </div>
+                  <p className="mt-1 text-[#8B8B9E] text-xs font-numbers">
+                    {formatLocalCurrency(pricingMode === 'project' && projectEstimate ? projectEstimate.localHigh : calculatedRate.localHigh, selectedCountry)}
+                  </p>
                 </div>
               </div>
               {pricingMode === 'project' && (
@@ -423,7 +460,7 @@ function CalculatorContent() {
                     {latestExchange ? (
                       <div className="space-y-1">
                         <p className="text-[#E2E2E2]">
-                          Latest saved rate: 1 USD = {formatPKRRate(latestExchange.rate)} PKR
+                          Latest saved rate: 1 USD = {formatPKRRate(latestExchange.rate)} {selectedCountry.currency}
                         </p>
                         <p>
                           Last updated: {formatLastUpdated(latestExchange.lastUpdated)}

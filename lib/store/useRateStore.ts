@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { FALLBACK_USD_TO_PKR } from '@/lib/exchangeRate';
 import type { MarketRate } from '@/lib/marketRates';
+import type { CountryCode } from '@/lib/countryConfig';
 
 export type Experience = 'junior' | 'mid' | 'senior';
 export type ClientType = 'local' | 'foreign';
@@ -14,6 +15,7 @@ export interface SavedRate {
   skillSlug: string;
   experience: Experience;
   city: string;
+  country: CountryCode;
   clientType: ClientType;
   rate: CalculatedRate;
   savedAt: string;
@@ -26,6 +28,7 @@ interface RateStore {
   selectedCategory: string;
   experience: Experience;
   city: string;
+  country: CountryCode;
   clientType: ClientType;
   usdToPkr: number;
 
@@ -40,6 +43,7 @@ interface RateStore {
   setSkill: (slug: string, name: string, category: string) => void;
   setExperience: (exp: Experience) => void;
   setCity: (city: string) => void;
+  setCountry: (country: CountryCode) => void;
   setClientType: (type: ClientType) => void;
   setUsdToPkr: (rate: number) => void;
   calculateRate: () => Promise<void>;
@@ -56,6 +60,7 @@ export const useRateStore = create<RateStore>()(
       selectedCategory: 'Development',
       experience: 'mid',
       city: 'remote',
+      country: 'PK',
       clientType: 'foreign',
       usdToPkr: FALLBACK_USD_TO_PKR,
       calculatedRate: null,
@@ -72,6 +77,10 @@ export const useRateStore = create<RateStore>()(
 
       setCity: (city) => {
         set({ city });
+      },
+
+      setCountry: (country) => {
+        set({ country, city: country === 'PK' ? get().city : 'remote' });
       },
 
       setClientType: (type) => {
@@ -91,6 +100,7 @@ export const useRateStore = create<RateStore>()(
             skillSlug: state.selectedSkillSlug,
             experience: state.experience,
             city: state.city,
+            country: state.country,
             clientType: state.clientType,
           });
           const response = await fetch(`/api/market-rate?${params.toString()}`);
@@ -120,6 +130,7 @@ export const useRateStore = create<RateStore>()(
           skillSlug: state.selectedSkillSlug,
           experience: state.experience,
           city: state.city,
+          country: state.country,
           clientType: state.clientType,
           rate: state.calculatedRate,
           savedAt: new Date().toISOString(),
@@ -144,6 +155,7 @@ export const useRateStore = create<RateStore>()(
         selectedCategory: state.selectedCategory,
         experience: state.experience,
         city: state.city,
+        country: state.country,
         clientType: state.clientType,
         calculatedRate: state.calculatedRate,
         savedRates: state.savedRates,

@@ -9,6 +9,7 @@ import { useRateStore } from '@/lib/store/useRateStore';
 import { useTaxStore } from '@/lib/store/useTaxStore';
 import { Activity, Calculator, FileText, LogOut, Receipt, RefreshCw, User } from 'lucide-react';
 import { formatPKR } from '@/lib/taxCalculator';
+import { formatLocalCurrency, getCountryByCode, type CurrencyCode } from '@/lib/countryConfig';
 import { clsx } from 'clsx';
 
 interface SavedRate {
@@ -16,6 +17,8 @@ interface SavedRate {
   skill: string;
   experience: string;
   city: string;
+  country_code?: string;
+  currency_code?: CurrencyCode;
   client_type: string;
   usd_mid: number;
   pkr_mid: number;
@@ -131,10 +134,12 @@ export default function DashboardPage() {
               skill: rate.skill,
               experience: rate.experience,
               city: rate.city,
+              country_code: rate.country,
+              currency_code: rate.rate.localCurrency,
               client_type: rate.clientType,
-              pkr_low: rate.rate.pkrLow,
-              pkr_mid: rate.rate.pkrMid,
-              pkr_high: rate.rate.pkrHigh,
+              pkr_low: rate.rate.localLow,
+              pkr_mid: rate.rate.localMid,
+              pkr_high: rate.rate.localHigh,
               usd_low: rate.rate.usdLow,
               usd_mid: rate.rate.usdMid,
               usd_high: rate.rate.usdHigh,
@@ -295,13 +300,19 @@ export default function DashboardPage() {
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <h3 className="font-bold text-white">{rate.skill}</h3>
-                            <p className="text-xs text-[#8B8B9E] capitalize">{rate.experience} - {rate.client_type} client - {rate.city}</p>
+                            <p className="text-xs text-[#8B8B9E] capitalize">
+                              {rate.experience} - {rate.client_type} client - {getCountryByCode(rate.country_code || 'PK').name} - {rate.city}
+                            </p>
                           </div>
                           <span className="text-[10px] text-[#8B8B9E]">{new Date(rate.created_at).toLocaleDateString()}</span>
                         </div>
                         <div className="flex items-center justify-between border-t border-[rgba(255,255,255,0.05)] pt-4">
                           <Metric label="USD Rate" value={`$${rate.usd_mid}/hr`} highlight />
-                          <Metric label="PKR Rate" value={`Rs ${formatPKR(rate.pkr_mid)}/hr`} alignRight />
+                          <Metric
+                            label={`${rate.currency_code || 'PKR'} Rate`}
+                            value={`${formatLocalCurrency(rate.pkr_mid, getCountryByCode(rate.country_code || 'PK'))}/hr`}
+                            alignRight
+                          />
                         </div>
                       </motion.div>
                     ))}

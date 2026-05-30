@@ -6,6 +6,7 @@ import { Reveal, Stagger, StaggerItem } from '@/components/ui/Motion';
 import { rateData } from '@/lib/rateData';
 import { absoluteUrl, skillLongTailKeywords, skillRatePath, siteName } from '@/lib/seoConfig';
 import { confidenceLabel, formatCurrency, getSkillBenchmarks } from '@/lib/seoMarket';
+import { globalLiteCountries } from '@/lib/countryConfig';
 
 type PageProps = {
   params: {
@@ -330,6 +331,36 @@ export default async function SkillRatePage({ params }: PageProps) {
                   <li key={keyword}>{keyword}</li>
                 ))}
               </ul>
+            </section>
+          </Reveal>
+
+          <Reveal delay={0.08}>
+            <section className="rounded-2xl border border-[rgba(0,245,196,0.12)] bg-[#111118] p-5">
+              <h2 className="text-sm font-semibold uppercase tracking-widest text-[#8B8B9E] mb-4">
+                Compare across countries
+              </h2>
+              <div className="flex flex-col gap-3">
+                {globalLiteCountries.map((c) => (
+                  <Link
+                    key={c.code}
+                    href={c.code === 'PK' ? skillRatePath(skill.slug) : `/rates/${c.slug}/${skill.slug}`}
+                    className={`interactive-surface inline-flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${
+                      c.code === 'PK'
+                        ? 'border-[#00F5C4] text-[#00F5C4] bg-[rgba(0,245,196,0.04)]'
+                        : 'border-[rgba(255,255,255,0.08)] text-[#E2E2E2] hover:border-[#00F5C4] hover:text-[#00F5C4]'
+                    }`}
+                    aria-current={c.code === 'PK' ? 'page' : undefined}
+                  >
+                    <span>
+                      {skill.skill} <span className="text-[#8B8B9E]">{c.name}</span>
+                    </span>
+                    <ArrowRight size={14} />
+                  </Link>
+                ))}
+              </div>
+              <p className="mt-3 text-[10px] text-[#8B8B9E] leading-relaxed">
+                Global Lite: India &amp; Bangladesh show rate benchmarks only. Tax guidance available for Pakistan only.
+              </p>
             </section>
           </Reveal>
 

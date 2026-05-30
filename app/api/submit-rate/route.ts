@@ -40,13 +40,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing saved rate fields' }, { status: 400 });
     }
 
-    const { error } = await supabase
-      .from('saved_rates')
-      .insert({
+    const insertPayload = {
         user_id: session.user.id,
         skill: body.skill,
         experience: body.experience,
         city: body.city,
+        country_code: body.country_code || 'PK',
+        currency_code: body.currency_code || 'PKR',
         client_type: body.client_type,
         pkr_low: body.pkr_low,
         pkr_mid: body.pkr_mid,
@@ -54,9 +54,33 @@ export async function POST(request: Request) {
         usd_low: body.usd_low,
         usd_mid: body.usd_mid,
         usd_high: body.usd_high,
-      });
+      };
 
-    if (error) throw error;
+    const { error } = await supabase
+      .from('saved_rates')
+      .insert(insertPayload);
+
+    if (error) {
+      const missingGlobalLiteColumns =
+        error.message.includes('country_code') || error.message.includes('currency_code');
+
+      if (!missingGlobalLiteColumns) throw error;
+
+      const { error: legacyError } = await supabase.from('saved_rates').insert({
+        user_id: insertPayload.user_id,
+        skill: insertPayload.skill,
+        experience: insertPayload.experience,
+        city: insertPayload.city,
+        client_type: insertPayload.client_type,
+        pkr_low: insertPayload.pkr_low,
+        pkr_mid: insertPayload.pkr_mid,
+        pkr_high: insertPayload.pkr_high,
+        usd_low: insertPayload.usd_low,
+        usd_mid: insertPayload.usd_mid,
+        usd_high: insertPayload.usd_high,
+      });
+      if (legacyError) throw legacyError;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

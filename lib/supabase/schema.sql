@@ -53,6 +53,10 @@ CREATE TABLE IF NOT EXISTS public.saved_rates (
   skill       text NOT NULL,
   experience  text NOT NULL,
   city        text NOT NULL,
+  -- Global Lite: tracks which country/currency this saved rate belongs to.
+  -- pkr_* columns hold local currency values for non-PK countries.
+  country_code text NOT NULL DEFAULT 'PK',
+  currency_code text NOT NULL DEFAULT 'PKR',
   client_type text NOT NULL CHECK (client_type IN ('local', 'foreign')),
   pkr_low     integer NOT NULL,
   pkr_mid     integer NOT NULL,
@@ -202,6 +206,10 @@ CREATE TABLE IF NOT EXISTS public.rate_benchmarks (
   skill_name       text NOT NULL,
   category         text NOT NULL,
   city             text NOT NULL,
+  -- Global Lite: country_code scopes benchmarks per country.
+  -- pkr_* columns hold local currency values (INR/BDT) for non-PK rows.
+  country_code     text NOT NULL DEFAULT 'PK',
+  currency_code    text NOT NULL DEFAULT 'PKR',
   experience       text NOT NULL CHECK (experience IN ('junior', 'mid', 'senior')),
   client_type      text NOT NULL CHECK (client_type IN ('local', 'foreign')),
   pkr_low          integer NOT NULL CHECK (pkr_low > 0),
@@ -214,8 +222,7 @@ CREATE TABLE IF NOT EXISTS public.rate_benchmarks (
   confidence_score integer NOT NULL DEFAULT 50 CHECK (confidence_score >= 0 AND confidence_score <= 100),
   source_notes     text,
   last_updated     timestamptz NOT NULL DEFAULT now(),
-  created_at       timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (skill_slug, city, experience, client_type)
+  created_at       timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS public.tax_estimates (
@@ -232,8 +239,15 @@ CREATE TABLE IF NOT EXISTS public.tax_estimates (
 );
 
 CREATE INDEX IF NOT EXISTS idx_tax_estimates_user_id ON public.tax_estimates(user_id);
+-- Legacy PK-only lookup (kept for backward compat)
 CREATE INDEX IF NOT EXISTS idx_rate_benchmarks_lookup ON public.rate_benchmarks(skill_slug, city, experience, client_type);
 CREATE INDEX IF NOT EXISTS idx_rate_benchmarks_last_updated ON public.rate_benchmarks(last_updated DESC);
+-- Global Lite country-aware unique index
+CREATE UNIQUE INDEX IF NOT EXISTS rate_benchmarks_country_unique_idx
+  ON public.rate_benchmarks(country_code, skill_slug, city, experience, client_type);
+-- Global Lite country lookup index
+CREATE INDEX IF NOT EXISTS idx_rate_benchmarks_country_lookup
+  ON public.rate_benchmarks(country_code, skill_slug, city, experience, client_type);
 
 ALTER TABLE public.tax_estimates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rate_sources ENABLE ROW LEVEL SECURITY;

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getUsdToPkrRate } from '@/lib/exchangeRate';
+import { getUsdExchangeRate } from '@/lib/exchangeRate';
+import { getCountryByCode, isGlobalLiteCountry, type CountryCode } from '@/lib/countryConfig';
 import {
   createSeedFallbackBySlug,
   mapBenchmarkRow,
@@ -41,15 +42,20 @@ async function getBenchmark(
   skillSlug: string,
   city: string,
   experience: Experience,
-  clientType: ClientType
+  clientType: ClientType,
+  countryCode: CountryCode
 ) {
-  return supabase
+  let query = supabase
     .from('rate_benchmarks')
     .select('*')
     .eq('skill_slug', skillSlug)
     .eq('city', city)
     .eq('experience', experience)
-    .eq('client_type', clientType)
+    .eq('client_type', clientType);
+
+  query = query.eq('country_code', countryCode);
+
+  return query
     .order('last_updated', { ascending: false })
     .limit(1)
     .maybeSingle<MarketBenchmarkRow>();
@@ -91,12 +97,16 @@ function applyCityContext(rate: MarketRate, city: string, clientType: ClientType
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const skillSlug = searchParams.get('skillSlug') || 'web-dev';
-  const city = (searchParams.get('city') || 'remote').toLowerCase();
+  const countryCode = ((searchParams.get('country') || 'PK').toUpperCase()) as CountryCode;
+  const country = getCountryByCode(countryCode);
+  const city = country.supportsCityContext
+    ? (searchParams.get('city') || 'remote').toLowerCase()
+    : country.defaultCity;
   const experience = (searchParams.get('experience') || 'mid') as Experience;
   const clientType = (searchParams.get('clientType') || 'foreign') as ClientType;
-  const exchange = await getUsdToPkrRate();
+  const exchange = await getUsdExchangeRate(country.currency);
 
-  if (!validExperiences.includes(experience) || !validClientTypes.includes(clientType)) {
+  if (!validExperiences.includes(experience) || !validClientTypes.includes(clientType) || !isGlobalLiteCountry(countryCode)) {
     return NextResponse.json({ error: 'Invalid market rate query' }, { status: 400 });
   }
 
@@ -116,35 +126,89 @@ export async function GET(request: Request) {
       const { data, error } = await getBenchmark(
         supabase,
         skillSlug,
-        city,
-        experience,
-        clientType
-      );
+          city,
+          experience,
+          clientType,
+          country.code
+        );
 
-      if (error) throw error;
+      if (error && country.code !== 'PK') throw error;
 
       if (data) {
         return NextResponse.json({
           rate: mapBenchmarkRow(data, exchange.rate),
           exchange,
+          country,
         });
       }
 
-      if (city !== 'remote') {
+      if (country.code === 'PK' && error) {
+        const { data: legacyData, error: legacyError } = await supabase
+          .from('rate_benchmarks')
+          .select('*')
+          .eq('skill_slug', skillSlug)
+          .eq('city', city)
+          .eq('experience', experience)
+          .eq('client_type', clientType)
+          .order('last_updated', { ascending: false })
+          .limit(1)
+          .maybeSingle<MarketBenchmarkRow>();
+
+        if (legacyError) throw legacyError;
+
+        if (legacyData) {
+          return NextResponse.json({
+            rate: mapBenchmarkRow({ ...legacyData, country_code: 'PK', currency_code: 'PKR' }, exchange.rate),
+            exchange,
+            country,
+          });
+        }
+      }
+
+      if (country.code === 'PK' && city !== 'remote') {
         const { data: remoteData, error: remoteError } = await getBenchmark(
           supabase,
           skillSlug,
           'remote',
           experience,
-          clientType
+          clientType,
+          country.code
         );
 
-        if (remoteError) throw remoteError;
+        if (remoteError) {
+          const { data: legacyRemoteData, error: legacyRemoteError } = await supabase
+            .from('rate_benchmarks')
+            .select('*')
+            .eq('skill_slug', skillSlug)
+            .eq('city', 'remote')
+            .eq('experience', experience)
+            .eq('client_type', clientType)
+            .order('last_updated', { ascending: false })
+            .limit(1)
+            .maybeSingle<MarketBenchmarkRow>();
+
+          if (legacyRemoteError) throw legacyRemoteError;
+
+          if (legacyRemoteData) {
+            return NextResponse.json({
+              rate: applyCityContext(
+                mapBenchmarkRow({ ...legacyRemoteData, country_code: 'PK', currency_code: 'PKR' }, exchange.rate),
+                city,
+                clientType
+              ),
+              exchange,
+              country,
+            });
+          }
+
+          throw remoteError;
+        }
 
         if (remoteData) {
           return NextResponse.json({
             rate: applyCityContext(mapBenchmarkRow(remoteData, exchange.rate), city, clientType),
             exchange,
+            country,
           });
         }
       }
@@ -153,7 +217,7 @@ export async function GET(request: Request) {
     }
   }
 
-  const fallback = createSeedFallbackBySlug(skillSlug, experience, city, clientType, exchange.rate);
+  const fallback = createSeedFallbackBySlug(skillSlug, experience, city, clientType, exchange.rate, country.code);
 
   if (!fallback) {
     return NextResponse.json({ error: 'Unknown skill' }, { status: 404 });
@@ -162,5 +226,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     rate: fallback,
     exchange,
+    country,
   });
 }

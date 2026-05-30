@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { fallbackUsdExchangeRates, type CurrencyCode } from '@/lib/countryConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,7 +8,19 @@ function isStale(fetchedAt: string) {
   return Date.now() - new Date(fetchedAt).getTime() > 36 * 60 * 60 * 1000;
 }
 
-export async function GET() {
+function getQuoteCurrency(request: Request): CurrencyCode | null {
+  const { searchParams } = new URL(request.url);
+  const quote = (searchParams.get('quote') || 'PKR').toUpperCase();
+  return quote in fallbackUsdExchangeRates ? (quote as CurrencyCode) : null;
+}
+
+export async function GET(request: Request) {
+  const quoteCurrency = getQuoteCurrency(request);
+
+  if (!quoteCurrency) {
+    return NextResponse.json({ ok: false, error: 'Unsupported exchange rate quote currency' }, { status: 400 });
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -31,13 +44,13 @@ export async function GET() {
     .from('exchange_rates')
     .select('rate, source, provider_updated_at, fetched_at')
     .eq('base_currency', 'USD')
-    .eq('quote_currency', 'PKR')
+    .eq('quote_currency', quoteCurrency)
     .order('fetched_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error) {
-    console.error('Supabase read error (latest USD/PKR rate):', error.message);
+    console.error(`Supabase read error (latest USD/${quoteCurrency} rate):`, error.message);
     return NextResponse.json(
       { ok: false, error: 'Exchange rate is currently unavailable' },
       { status: 500 }
@@ -45,7 +58,7 @@ export async function GET() {
   }
 
   if (!data) {
-    console.error('No saved rate found in public.exchange_rates');
+    console.error(`No saved USD/${quoteCurrency} rate found in public.exchange_rates`);
     return NextResponse.json(
       { ok: false, error: 'No saved exchange rate exists' },
       { status: 404 }
@@ -55,6 +68,8 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     rate: Number(data.rate),
+    baseCurrency: 'USD',
+    quoteCurrency,
     source: data.source,
     lastUpdated: data.fetched_at,
     providerUpdatedAt: data.provider_updated_at,

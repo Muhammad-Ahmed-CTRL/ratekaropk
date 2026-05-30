@@ -1,6 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import {
+  fallbackUsdExchangeRates,
+  getCountryByCurrency,
+  type CurrencyCode,
+} from '@/lib/countryConfig';
 
-export const FALLBACK_USD_TO_PKR = 278.5;
+export const FALLBACK_USD_TO_PKR = fallbackUsdExchangeRates.PKR;
 
 export interface ExchangeRateResult {
   rate: number;
@@ -8,18 +13,23 @@ export interface ExchangeRateResult {
   lastUpdated: string;
   providerUpdatedAt?: string | null;
   stale?: boolean;
+  baseCurrency: 'USD';
+  quoteCurrency: CurrencyCode;
 }
 
-export async function getUsdToPkrRate(): Promise<ExchangeRateResult> {
+export async function getUsdExchangeRate(quoteCurrency: CurrencyCode = 'PKR'): Promise<ExchangeRateResult> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const fallbackRate = fallbackUsdExchangeRates[quoteCurrency];
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
-      rate: FALLBACK_USD_TO_PKR,
+      rate: fallbackRate,
       source: 'fallback',
       lastUpdated: new Date().toISOString(),
       stale: true,
+      baseCurrency: 'USD',
+      quoteCurrency,
     };
   }
 
@@ -37,7 +47,7 @@ export async function getUsdToPkrRate(): Promise<ExchangeRateResult> {
       .from('exchange_rates')
       .select('rate, source, fetched_at, provider_updated_at')
       .eq('base_currency', 'USD')
-      .eq('quote_currency', 'PKR')
+      .eq('quote_currency', quoteCurrency)
       .order('fetched_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -56,16 +66,28 @@ export async function getUsdToPkrRate(): Promise<ExchangeRateResult> {
         lastUpdated,
         providerUpdatedAt: data.provider_updated_at,
         stale,
+        baseCurrency: 'USD',
+        quoteCurrency,
       };
     }
   } catch (error) {
-    console.error('Unable to read saved USD/PKR rate:', error);
+    console.error(`Unable to read saved USD/${quoteCurrency} rate:`, error);
   }
 
   return {
-    rate: FALLBACK_USD_TO_PKR,
+    rate: fallbackRate,
     source: 'fallback',
     lastUpdated: new Date().toISOString(),
     stale: true,
+    baseCurrency: 'USD',
+    quoteCurrency,
   };
+}
+
+export async function getUsdToPkrRate(): Promise<ExchangeRateResult> {
+  return getUsdExchangeRate('PKR');
+}
+
+export function getExchangeCountry(currency: CurrencyCode) {
+  return getCountryByCurrency(currency);
 }

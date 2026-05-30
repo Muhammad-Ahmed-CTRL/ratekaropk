@@ -31,9 +31,17 @@
 - **Rate-Integrated Content:** Automatically incorporates computed experience levels and client-friendly rate suggestions inside the proposal pitch.
 - **Save & Retrieve:** Save proposal drafts directly to your user dashboard.
 
-### 4. USD/PKR Latest Saved Rate
-- **Daily Saved Exchange Rate:** A protected Vercel Cron route fetches USD-to-PKR once per day and stores the result in Supabase.
-- **Safe Fallbacks:** If providers fail, the app keeps using the last saved Supabase rate and shows the last updated date.
+### 4. USD Exchange Rate (Multi-Currency)
+- **Daily Saved Exchange Rates:** A protected Vercel Cron route fetches USD-to-PKR, USD-to-INR, and USD-to-BDT once per day and stores all results in Supabase.
+- **Calculator reads saved Supabase rate:** The client never calls third-party exchange APIs from the browser. It only reads `/api/rates/latest?quote=PKR|INR|BDT`.
+- **Safe Fallbacks:** If providers fail, the app continues using the last saved Supabase rate and displays the last-updated timestamp. No stale rate is overwritten with a bad value.
+
+### 5. 🌏 Global Lite (Pakistan-built, expanding)
+- **Pakistan:** Full support — PKR rates, city context (Karachi, Lahore, Islamabad, etc.), PSEB/FBR tax guidance.
+- **India:** Rate calculator only — INR benchmarks, remote-only, no tax guidance.
+- **Bangladesh:** Rate calculator only — BDT benchmarks, remote-only, no tax guidance.
+- Country rate pages live at `/rates/india/[skill]` and `/rates/bangladesh/[skill]`.
+- All country pages link back to the equivalent Pakistan rate page.
 
 ### 5. 🛡️ User Dashboard & Auth
 - **Secure Supabase Authentication:** Quick sign-up and login utilizing email/password verification and social providers.
@@ -125,16 +133,18 @@ EXCHANGERATESAPI_KEY=your_optional_exchangeratesapi_key
 ```
 
 ### 3️⃣ Setup the Supabase Database
-1. Go to your **Supabase Dashboard** -> Choose your project.
-2. Navigate to **SQL Editor** -> Click **New Query**.
+1. Go to your **Supabase Dashboard** → Choose your project.
+2. Navigate to **SQL Editor** → Click **New Query**.
 3. Copy the entire contents of [lib/supabase/setup.sql](lib/supabase/setup.sql) and paste them into the SQL editor.
-4. Click **Run**. 
+4. Click **Run**.
 This will automatically:
 - Create the core tables (`skills`, `rate_sources`, `rate_benchmarks`, `exchange_rates`, `saved_rates`, `tax_estimates`, `proposals`, `rate_submissions`).
 - Seed 45+ standard freelance skills with preconfigured slugs and categories.
 - Enable **Row Level Security (RLS)** and register robust security policies protecting user metadata.
 
-If your Supabase database was created before the daily exchange-rate updater existed, run [lib/supabase/exchange_rates.sql](lib/supabase/exchange_rates.sql) once in the SQL editor.
+**Upgrading an existing database?** Run [lib/supabase/global_lite.sql](lib/supabase/global_lite.sql) once in the SQL editor to add `country_code` and `currency_code` columns to `rate_benchmarks` and `saved_rates`. This migration is safe and non-destructive — existing Pakistan rows get `country_code='PK'` as default.
+
+If your Supabase database was created before the daily exchange-rate updater existed, also run [lib/supabase/exchange_rates.sql](lib/supabase/exchange_rates.sql) once.
 
 ### 4️⃣ Start Development Server
 ```bash
@@ -163,9 +173,13 @@ curl -X POST https://your-domain.com/api/market-refresh \
 - This hook checks live exchange feeds, computes updated benchmark rates based on historical weights, and updates stale parameters.
 - If live rates are low confidence, the application warns the user, and handles graceful offline fallbacks securely.
 
-### Daily USD/PKR Cron
+### Daily USD Exchange Rate Cron (Multi-Currency)
 
-Vercel runs `/api/cron/update-usd-pkr` daily around 03:00 UTC. The route is protected by `CRON_SECRET`, uses the Supabase service role key only on the server, and stores successful USD/PKR provider results in `exchange_rates`. The public calculator reads only `/api/rates/latest`, which uses the anon key and never calls third-party currency APIs from the browser.
+Vercel runs `/api/cron/update-usd-pkr` daily around 03:00 UTC. The route is protected by `CRON_SECRET`, uses the Supabase service role key only on the server, and stores successful results for **USD/PKR, USD/INR, and USD/BDT** in `exchange_rates`.
+
+- The public calculator reads only `/api/rates/latest?quote=PKR|INR|BDT`, which uses the anon key and **never calls third-party currency APIs from the browser**.
+- If all providers fail, the cron does not overwrite old data. The last saved rate stays active and calculators keep working with a visible last-updated timestamp.
+- To update `/api/exchange-rate` (legacy endpoint) for a specific currency, pass `?quote=INR` or `?quote=BDT`.
 
 Local cron test:
 
@@ -173,19 +187,23 @@ Local cron test:
 curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/update-usd-pkr
 ```
 
-Latest saved rate test:
+Latest saved PKR rate test:
 
 ```bash
-curl http://localhost:3000/api/rates/latest
+curl http://localhost:3000/api/rates/latest?quote=PKR
+```
+
+Latest saved INR rate test:
+
+```bash
+curl http://localhost:3000/api/rates/latest?quote=INR
 ```
 
 Production cron test:
 
 ```bash
-curl -H "Authorization: Bearer YOUR_CRON_SECRET" https://YOUR_DOMAIN.com/api/cron/update-usd-pkr
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" https://ratekaropk.site/api/cron/update-usd-pkr
 ```
-
-If all currency providers fail, the cron route does not overwrite or insert a bad rate. It returns the latest saved Supabase rate when one exists so calculators can keep working with a visible last-updated timestamp.
 
 ---
 
