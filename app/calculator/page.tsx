@@ -66,6 +66,10 @@ function CalculatorContent() {
     let ignore = false;
 
     async function loadLatestExchangeRate() {
+      // Clear previous rate and error to prevent showing mismatched currency data
+      setLatestExchange(null);
+      setExchangeError(null);
+
       try {
         // The client only reads RateKaro's saved Supabase-backed rate endpoint.
         // Third-party FX providers are never called from the browser.
@@ -80,6 +84,7 @@ function CalculatorContent() {
         }
       } catch {
         if (!ignore) {
+          setLatestExchange(null);
           setExchangeError('Exchange rate is currently unavailable. Please try again later.');
         }
       }
