@@ -11,10 +11,11 @@
 --     (they now store local currency values for non-PK countries)
 -- ============================================================
 
--- ─── 1. Add country_code and currency_code to rate_benchmarks ─
+-- ─── 1. Add Global Lite metadata columns to rate_benchmarks ─
 ALTER TABLE public.rate_benchmarks
   ADD COLUMN IF NOT EXISTS country_code text NOT NULL DEFAULT 'PK',
-  ADD COLUMN IF NOT EXISTS currency_code text NOT NULL DEFAULT 'PKR';
+  ADD COLUMN IF NOT EXISTS currency_code text NOT NULL DEFAULT 'PKR',
+  ADD COLUMN IF NOT EXISTS source_notes text;
 
 -- ─── 2. Add country_code and currency_code to saved_rates ─────
 ALTER TABLE public.saved_rates
